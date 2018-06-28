@@ -1,19 +1,22 @@
----
-title: "A STIR Example"
-#output: html_document
-output: rmarkdown::github_document
----
+A STIR Example
+================
 
-## Set up: 
+Set up:
+-------
 
 Load packages, set parameters:
 
-```{r setup, include=T}
+``` r
 #knitr::opts_chunk$set(echo = TRUE)
 #rm(list = ls())
 source('utilFuncs.R')
 
 library(reshape2)
+```
+
+    ## Warning: package 'reshape2' was built under R version 3.4.3
+
+``` r
 library(ggplot2)
 # load necessary packages
 #packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
@@ -22,7 +25,11 @@ library(ggplot2)
 #  devtools::install_github("insilico/privateEC")
 #}
 library(privateEC)  # simulate data
+```
 
+    ## Loading privateEC
+
+``` r
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -34,9 +41,10 @@ class.lab <- "class"
 writeData <- F
 ```
 
-## Simulate data:
+Simulate data:
+--------------
 
-```{r simulate}
+``` r
 if (letsSimulate == TRUE){
   n.samp <- 100
   num.samp <- n.samp
@@ -78,7 +86,7 @@ if (writeData == TRUE){
 
 ### Run multiSURF:
 
-```{r}
+``` r
 RF.method = "multisurf"
 metric <- "manhattan"
 # bam: I'm letting k=0 because multisurf
@@ -88,14 +96,13 @@ results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metr
 t_sorted_multisurf <- results.list$`STIR-t`
 # vecW_observed <- results.list[[1]]
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
-
 ```
 
 ### Run ReliefF:
 
-Run an example ReliefF with $k=\lfloor(m-1)/6\rfloor$:
+Run an example ReliefF with *k* = ⌊(*m* − 1)/6⌋:
 
-```{r}
+``` r
 t_sorted_relieff <- list()
 i <- 0
 RF.method = "relieff"
@@ -112,7 +119,7 @@ t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 
 ### Run standard t-test:
 
-```{r}
+``` r
 regular.ttest.results <- sapply(1:ncol(predictors.mat), regular.ttest.fn, dat = dat)
 names(regular.ttest.results) <- colnames(predictors.mat)
 regular.ttest.sorted <- sort.pvalue(regular.ttest.results)
@@ -121,18 +128,18 @@ regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 ### Aggregate results:
 
-```{r}
+``` r
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
 # final.mat <- reshape::merge_all(t_sorted_relieff)
 write.csv(final.mat,file="final.mat.csv")
 ```
 
+Plot results:
+-------------
 
-## Plot results:
+Plot the significance of attributes. p-values &lt;*e*<sup>−10</sup> are plotted as &lt;*e*<sup>−10</sup> for better visual scale. Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. (Dots are slightly jittered vertically to show both methods' results.)
 
-Plot the significance of attributes. p-values $< e^{-10}$ are plotted as $< e^{-10}$ for better visual scale. Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. (Dots are slightly jittered vertically to show both methods' results.)
-
-```{r}
+``` r
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
 
@@ -151,7 +158,6 @@ t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = 
   scale_color_manual(values = cbPalette[2:3]) +
   geom_hline(yintercept = -log(0.05, 10), linetype = 4, color = "grey") 
 t4
-
 ```
 
-
+![](STIRexample_files/figure-markdown_github/unnamed-chunk-5-1.png)
