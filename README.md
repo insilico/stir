@@ -1,4 +1,4 @@
-# STIR
+# STIR (STatistical Inference Relief)
 Open STIRexample.md to see an example of running STIR.
 
 Under Review:
