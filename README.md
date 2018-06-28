@@ -1,5 +1,5 @@
 # STIR
-# Open STIRexample.md to see an example of running STIR.
+Open STIRexample.md to see an example of running STIR.
 
-# Under Review:
-# http://insilico.utulsa.edu/software/STIR
+Under Review:
+http://insilico.utulsa.edu/software/STIR
