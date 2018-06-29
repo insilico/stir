@@ -7,7 +7,7 @@ Set up:
 Load packages, set parameters:
 
 ``` r
-knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 #source('utilFuncs.R')
 library(devtools)
@@ -16,6 +16,12 @@ library(devtools)
     ## Warning: package 'devtools' was built under R version 3.4.3
 
 ``` r
+if (!("privateEC" %in% installed.packages()[,"Package"])){
+  devtools::install_github("insilico/privateEC")
+}
+#if (!("stir" %in% installed.packages()[,"Package"])){
+#  devtools::install_github("insilico/stir")
+#}
 install_github("insilico/stir")
 ```
 
@@ -26,7 +32,7 @@ install_github("insilico/stir")
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/Rtmp5dQwXn/devtools11ca25bedf3dc/insilico-STIR-cd562e8'  \
+    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpIopQVw/devtools11e951474813a/insilico-STIR-51dc13c'  \
     ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
     ##   --install-tests
 
@@ -34,23 +40,8 @@ install_github("insilico/stir")
 
 ``` r
 library(stir)
-install_github("insilico/privateEC")  # needed for simulations
-```
+#install_github("insilico/privateEC")  # needed for simulations
 
-    ## Downloading GitHub repo insilico/privateEC@master
-    ## from URL https://api.github.com/repos/insilico/privateEC/zipball/master
-
-    ## Installing privateEC
-
-    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
-    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/Rtmp5dQwXn/devtools11ca26445e6b7/insilico-privateEC-0e5b67e'  \
-    ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
-    ##   --install-tests
-
-    ## 
-
-``` r
 library(reshape2)
 ```
 
@@ -59,11 +50,53 @@ library(reshape2)
 ``` r
 library(ggplot2)
 # load necessary packages
-#packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
-#check.packages(packages)
-#if (!("privateEC" %in% installed.packages()[,"Package"])){
-#  devtools::install_github("insilico/privateEC")
-#}
+packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
+check.packages(packages)
+```
+
+    ## Loading required package: CORElearn
+
+    ## Warning: package 'CORElearn' was built under R version 3.4.4
+
+    ## Loading required package: dplyr
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
+
+    ## Loading required package: pROC
+
+    ## Warning: package 'pROC' was built under R version 3.4.4
+
+    ## Type 'citation("pROC")' for a citation.
+
+    ## 
+    ## Attaching package: 'pROC'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     cov, smooth, var
+
+    ## Loading required package: plotROC
+
+    ## 
+    ## Attaching package: 'plotROC'
+
+    ## The following object is masked from 'package:pROC':
+    ## 
+    ##     ggroc
+
+    ##   ggplot2  devtools CORElearn  reshape2     dplyr      pROC   plotROC 
+    ##      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE
+
+``` r
 library(privateEC)  # simulate data
 ```
 

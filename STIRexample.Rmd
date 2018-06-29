@@ -9,18 +9,18 @@ output: rmarkdown::github_document
 Load packages, set parameters:
 
 ```{r setup, include=T}
-knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 #source('utilFuncs.R')
 library(devtools)
 if (!("privateEC" %in% installed.packages()[,"Package"])){
   devtools::install_github("insilico/privateEC")
 }
-if (!("stir" %in% installed.packages()[,"Package"])){
-  devtools::install_github("insilico/stir")
-}
-#install_github("insilico/stir")
-#library(stir)
+#if (!("stir" %in% installed.packages()[,"Package"])){
+#  devtools::install_github("insilico/stir")
+#}
+install_github("insilico/stir")
+library(stir)
 #install_github("insilico/privateEC")  # needed for simulations
 
 library(reshape2)
