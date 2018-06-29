@@ -32,7 +32,7 @@ install_github("insilico/stir")
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpIopQVw/devtools11e951474813a/insilico-STIR-51dc13c'  \
+    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpexON4B/devtools121f85ff7a707/insilico-STIR-fe0e936'  \
     ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
     ##   --install-tests
 
@@ -111,7 +111,7 @@ metric <- "manhattan"
 RF.method <- "multisurf"
 writeResults <- T
 class.lab <- "class"
-writeData <- F
+writeData <- T
 ```
 
 Simulate data:
@@ -150,10 +150,9 @@ num.samp <- nrow(dat)
 neighbor.idx <- find.neighbors(predictors.mat, method = RF.method, pheno.class, k = k)
 
 if (writeData == TRUE){
-  write.csv(dat, file = paste("data/ARF_compare", repi, RF.method, bias, "bias", 
-                              ifelse(RF.method == "relieff", k, "No"), "k", 
-                              pct.signals, "pct.signals",
-                              num.attr, "num.attr", num.samp, "num.samp.csv", sep = "_"))
+  write.csv(dat, file = paste("ARF_compare", RF.method, bias, "bias", 
+                             pct.signals, "pct.signals",
+                             num.attr, "num.attr", num.samp, "num.samp.csv", sep = "_"))
 }
 ```
 

@@ -77,10 +77,9 @@ num.samp <- nrow(dat)
 neighbor.idx <- find.neighbors(predictors.mat, method = RF.method, pheno.class, k = k)
 
 if (writeData == TRUE){
-  write.csv(dat, file = paste("data/ARF_compare", repi, RF.method, bias, "bias", 
-                              ifelse(RF.method == "relieff", k, "No"), "k", 
-                              pct.signals, "pct.signals",
-                              num.attr, "num.attr", num.samp, "num.samp.csv", sep = "_"))
+  write.csv(dat, file = paste("ARF_compare", RF.method, bias, "bias", 
+                             pct.signals, "pct.signals",
+                             num.attr, "num.attr", num.samp, "num.samp.csv", sep = "_"))
 }
 ```
 
