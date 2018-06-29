@@ -9,8 +9,9 @@ Load packages, set parameters:
 ``` r
 #knitr::opts_chunk$set(echo = TRUE)
 #rm(list = ls())
-source('utilFuncs.R')
-
+#source('utilFuncs.R')
+install_github("insilico/stir")
+library(stir)
 library(reshape2)
 ```
 
