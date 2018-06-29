@@ -7,11 +7,50 @@ Set up:
 Load packages, set parameters:
 
 ``` r
-#knitr::opts_chunk$set(echo = TRUE)
-#rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
 #source('utilFuncs.R')
+library(devtools)
+```
+
+    ## Warning: package 'devtools' was built under R version 3.4.3
+
+``` r
 install_github("insilico/stir")
+```
+
+    ## Downloading GitHub repo insilico/stir@master
+    ## from URL https://api.github.com/repos/insilico/stir/zipball/master
+
+    ## Installing stir
+
+    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
+    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
+    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/Rtmp5dQwXn/devtools11ca25bedf3dc/insilico-STIR-cd562e8'  \
+    ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
+    ##   --install-tests
+
+    ## 
+
+``` r
 library(stir)
+install_github("insilico/privateEC")  # needed for simulations
+```
+
+    ## Downloading GitHub repo insilico/privateEC@master
+    ## from URL https://api.github.com/repos/insilico/privateEC/zipball/master
+
+    ## Installing privateEC
+
+    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
+    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
+    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/Rtmp5dQwXn/devtools11ca26445e6b7/insilico-privateEC-0e5b67e'  \
+    ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
+    ##   --install-tests
+
+    ## 
+
+``` r
 library(reshape2)
 ```
 

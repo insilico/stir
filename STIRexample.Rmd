@@ -9,18 +9,26 @@ output: rmarkdown::github_document
 Load packages, set parameters:
 
 ```{r setup, include=T}
-#knitr::opts_chunk$set(echo = TRUE)
-#rm(list = ls())
-source('utilFuncs.R')
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+#source('utilFuncs.R')
+library(devtools)
+if (!("privateEC" %in% installed.packages()[,"Package"])){
+  devtools::install_github("insilico/privateEC")
+}
+if (!("stir" %in% installed.packages()[,"Package"])){
+  devtools::install_github("insilico/stir")
+}
+#install_github("insilico/stir")
+#library(stir)
+#install_github("insilico/privateEC")  # needed for simulations
 
 library(reshape2)
 library(ggplot2)
 # load necessary packages
-#packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
-#check.packages(packages)
-#if (!("privateEC" %in% installed.packages()[,"Package"])){
-#  devtools::install_github("insilico/privateEC")
-#}
+packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
+check.packages(packages)
+
 library(privateEC)  # simulate data
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
