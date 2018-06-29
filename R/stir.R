@@ -6,6 +6,8 @@
 #setwd()
 #create("stir")
 #install("stir")  # local
+#devtools::use_vignette("STIRexample")
+# commit and push to github
 #install_github("insilico/stir") # github
 #library(stir)
 
