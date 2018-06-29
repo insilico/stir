@@ -1,14 +1,19 @@
 ---
 title: "A STIR Example"
 author: "Brett McKinney and Trang Le"
+#date: "`r Sys.Date()`"
 #output: html_document
 #output: rmarkdown::html_vignette
-output: rmarkdown::github_document
-date: "`r Sys.Date()`"
-vignette: >
-  %\VignetteIndexEntry{A STIR Example}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+#output: rmarkdown::github_document
+#output: rmarkdown::github_document
+output: 
+  rmarkdown::github_document: 
+  keep_md: TRUE
+  
+#vignette: >
+#  %\VignetteIndexEntry{A STIR Example}
+#  %\VignetteEngine{knitr::rmarkdown::github_document}
+#  %\VignetteEncoding{UTF-8}
 ---
 
 ## Set up: 
