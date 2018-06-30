@@ -1,21 +1,25 @@
-A STIR Example
-================
+---
+title: "A STIR Example"
+author: "Brett McKinney and Trang Le"
+date: '2018-06-29'
+output:
+  html_document:
+    keep_md: yes
+    knitr:
+      clean: no
+      run_pandoc: no
+---
 
-Set up:
--------
+## Set up: 
 
 Load packages, set parameters:
 
-``` r
+
+```r
 #knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 #source('utilFuncs.R')
 library(devtools)
-```
-
-    ## Warning: package 'devtools' was built under R version 3.4.3
-
-``` r
 if (!("privateEC" %in% installed.packages()[,"Package"])){
   devtools::install_github("insilico/privateEC")
 }
@@ -25,84 +29,50 @@ if (!("privateEC" %in% installed.packages()[,"Package"])){
 install_github("insilico/stir")
 ```
 
-    ## Downloading GitHub repo insilico/stir@master
-    ## from URL https://api.github.com/repos/insilico/stir/zipball/master
+```
+## Downloading GitHub repo insilico/stir@master
+## from URL https://api.github.com/repos/insilico/stir/zipball/master
+```
 
-    ## Installing stir
+```
+## Installing stir
+```
 
-    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
-    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpexON4B/devtools121f85ff7a707/insilico-STIR-fe0e936'  \
-    ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
-    ##   --install-tests
+```
+## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
+##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
+##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpDOpNO3/devtools128b423baa200/insilico-STIR-11857cc'  \
+##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
+##   --install-tests
+```
 
-    ## 
+```
+## 
+```
 
-``` r
+```
+## Reloading installed stir
+```
+
+```r
 library(stir)
 #install_github("insilico/privateEC")  # needed for simulations
 
 library(reshape2)
-```
-
-    ## Warning: package 'reshape2' was built under R version 3.4.3
-
-``` r
 library(ggplot2)
 # load necessary packages
 packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
 check.packages(packages)
 ```
 
-    ## Loading required package: CORElearn
-
-    ## Warning: package 'CORElearn' was built under R version 3.4.4
-
-    ## Loading required package: dplyr
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-    ## Loading required package: pROC
-
-    ## Warning: package 'pROC' was built under R version 3.4.4
-
-    ## Type 'citation("pROC")' for a citation.
-
-    ## 
-    ## Attaching package: 'pROC'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     cov, smooth, var
-
-    ## Loading required package: plotROC
-
-    ## 
-    ## Attaching package: 'plotROC'
-
-    ## The following object is masked from 'package:pROC':
-    ## 
-    ##     ggroc
-
-    ##   ggplot2  devtools CORElearn  reshape2     dplyr      pROC   plotROC 
-    ##      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE
-
-``` r
-library(privateEC)  # simulate data
+```
+##   ggplot2  devtools CORElearn  reshape2     dplyr      pROC   plotROC 
+##      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE
 ```
 
-    ## Loading privateEC
+```r
+library(privateEC)  # simulate data
 
-``` r
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -114,10 +84,10 @@ class.lab <- "class"
 writeData <- T
 ```
 
-Simulate data:
---------------
+## Simulate data:
 
-``` r
+
+```r
 if (letsSimulate == TRUE){
   n.samp <- 100
   num.samp <- n.samp
@@ -158,7 +128,8 @@ if (writeData == TRUE){
 
 ### Run multiSURF:
 
-``` r
+
+```r
 RF.method = "multisurf"
 metric <- "manhattan"
 # bam: I'm letting k=0 because multisurf
@@ -172,9 +143,10 @@ t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
 
 ### Run ReliefF:
 
-Run an example ReliefF with *k* = ⌊(*m* − 1)/6⌋:
+Run an example ReliefF with $k=\lfloor(m-1)/6\rfloor$:
 
-``` r
+
+```r
 t_sorted_relieff <- list()
 i <- 0
 RF.method = "relieff"
@@ -191,7 +163,8 @@ t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 
 ### Run standard t-test:
 
-``` r
+
+```r
 regular.ttest.results <- sapply(1:ncol(predictors.mat), regular.ttest.fn, dat = dat)
 names(regular.ttest.results) <- colnames(predictors.mat)
 regular.ttest.sorted <- sort.pvalue(regular.ttest.results)
@@ -200,18 +173,20 @@ regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 ### Aggregate results:
 
-``` r
+
+```r
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
 # final.mat <- reshape::merge_all(t_sorted_relieff)
 write.csv(final.mat,file="final.mat.csv")
 ```
 
-Plot results:
--------------
 
-Plot the significance of attributes. p-values &lt;*e*<sup>−10</sup> are plotted as &lt;*e*<sup>−10</sup> for better visual scale. Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. (Dots are slightly jittered vertically to show both methods' results.)
+## Plot results:
 
-``` r
+Plot the significance of attributes. p-values $< e^{-10}$ are plotted as $< e^{-10}$ for better visual scale. Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. (Dots are slightly jittered vertically to show both methods' results.)
+
+
+```r
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
 
@@ -232,4 +207,6 @@ t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = 
 t4
 ```
 
-![](STIRexample_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](STIRexample_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+

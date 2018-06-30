@@ -1,7 +1,7 @@
 ---
 title: "A STIR Example"
 author: "Brett McKinney and Trang Le"
-date: '`r Sys.Date()`'
+date: '2018-06-29'
 output:
   html_document:
     keep_md: yes
@@ -14,7 +14,8 @@ output:
 
 Load packages, set parameters:
 
-```{r setup, include=T}
+
+```r
 #knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 #source('utilFuncs.R')
@@ -26,6 +27,34 @@ if (!("privateEC" %in% installed.packages()[,"Package"])){
 #  devtools::install_github("insilico/stir")
 #}
 install_github("insilico/stir")
+```
+
+```
+## Downloading GitHub repo insilico/stir@master
+## from URL https://api.github.com/repos/insilico/stir/zipball/master
+```
+
+```
+## Installing stir
+```
+
+```
+## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
+##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
+##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpDOpNO3/devtools128b423baa200/insilico-STIR-11857cc'  \
+##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
+##   --install-tests
+```
+
+```
+## 
+```
+
+```
+## Reloading installed stir
+```
+
+```r
 library(stir)
 #install_github("insilico/privateEC")  # needed for simulations
 
@@ -34,7 +63,14 @@ library(ggplot2)
 # load necessary packages
 packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
 check.packages(packages)
+```
 
+```
+##   ggplot2  devtools CORElearn  reshape2     dplyr      pROC   plotROC 
+##      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE      TRUE
+```
+
+```r
 library(privateEC)  # simulate data
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -50,7 +86,8 @@ writeData <- T
 
 ## Simulate data:
 
-```{r simulate}
+
+```r
 if (letsSimulate == TRUE){
   n.samp <- 100
   num.samp <- n.samp
@@ -91,7 +128,8 @@ if (writeData == TRUE){
 
 ### Run multiSURF:
 
-```{r}
+
+```r
 RF.method = "multisurf"
 metric <- "manhattan"
 # bam: I'm letting k=0 because multisurf
@@ -101,14 +139,14 @@ results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metr
 t_sorted_multisurf <- results.list$`STIR-t`
 # vecW_observed <- results.list[[1]]
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
-
 ```
 
 ### Run ReliefF:
 
 Run an example ReliefF with $k=\lfloor(m-1)/6\rfloor$:
 
-```{r}
+
+```r
 t_sorted_relieff <- list()
 i <- 0
 RF.method = "relieff"
@@ -125,7 +163,8 @@ t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 
 ### Run standard t-test:
 
-```{r}
+
+```r
 regular.ttest.results <- sapply(1:ncol(predictors.mat), regular.ttest.fn, dat = dat)
 names(regular.ttest.results) <- colnames(predictors.mat)
 regular.ttest.sorted <- sort.pvalue(regular.ttest.results)
@@ -134,7 +173,8 @@ regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 ### Aggregate results:
 
-```{r}
+
+```r
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
 # final.mat <- reshape::merge_all(t_sorted_relieff)
 write.csv(final.mat,file="final.mat.csv")
@@ -145,7 +185,8 @@ write.csv(final.mat,file="final.mat.csv")
 
 Plot the significance of attributes. p-values $< e^{-10}$ are plotted as $< e^{-10}$ for better visual scale. Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. (Dots are slightly jittered vertically to show both methods' results.)
 
-```{r}
+
+```r
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
 
@@ -164,7 +205,8 @@ t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = 
   scale_color_manual(values = cbPalette[2:3]) +
   geom_hline(yintercept = -log(0.05, 10), linetype = 4, color = "grey") 
 t4
-
 ```
+
+![](STIRexample_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 

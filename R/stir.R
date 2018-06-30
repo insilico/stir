@@ -24,7 +24,6 @@ check.packages <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-
 #=========================================================================#
 attr.range <- function(my.mat) {
   # compute denominator of the diff formula

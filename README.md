@@ -1,5 +1,11 @@
 # STIR (STatistical Inference Relief)
-Open STIRexample.md to see an example of running STIR.
+
+To install:
+  >library(devtools)
+  >install_github("insilico/stir")
+  >library(stir)
+  
+Open vignettes/STIRexample.knit.html to see example STIR code and output.
 
 Under Review:
 http://insilico.utulsa.edu/software/STIR
