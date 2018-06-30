@@ -20,6 +20,13 @@ Load packages, set parameters:
 rm(list = ls())
 #source('utilFuncs.R')
 library(devtools)
+```
+
+```
+## Warning: package 'devtools' was built under R version 3.4.3
+```
+
+```r
 if (!("privateEC" %in% installed.packages()[,"Package"])){
   devtools::install_github("insilico/privateEC")
 }
@@ -41,7 +48,7 @@ install_github("insilico/stir")
 ```
 ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
 ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/RtmpDOpNO3/devtools128b423baa200/insilico-STIR-11857cc'  \
+##   '/private/var/folders/s7/k42hr_yn2kz082lv_lnr4t9d4y8h_3/T/Rtmpd1Rv8x/devtools133271a7167b5/insilico-STIR-125d860'  \
 ##   --library='/Users/brett-mckinney/Library/R/3.4/library'  \
 ##   --install-tests
 ```
@@ -50,19 +57,89 @@ install_github("insilico/stir")
 ## 
 ```
 
-```
-## Reloading installed stir
-```
-
 ```r
 library(stir)
 #install_github("insilico/privateEC")  # needed for simulations
 
 library(reshape2)
+```
+
+```
+## Warning: package 'reshape2' was built under R version 3.4.3
+```
+
+```r
 library(ggplot2)
 # load necessary packages
 packages <- c("ggplot2", "devtools", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
 check.packages(packages)
+```
+
+```
+## Loading required package: CORElearn
+```
+
+```
+## Warning: package 'CORElearn' was built under R version 3.4.4
+```
+
+```
+## Loading required package: dplyr
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Loading required package: pROC
+```
+
+```
+## Warning: package 'pROC' was built under R version 3.4.4
+```
+
+```
+## Type 'citation("pROC")' for a citation.
+```
+
+```
+## 
+## Attaching package: 'pROC'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     cov, smooth, var
+```
+
+```
+## Loading required package: plotROC
+```
+
+```
+## 
+## Attaching package: 'plotROC'
+```
+
+```
+## The following object is masked from 'package:pROC':
+## 
+##     ggroc
 ```
 
 ```
@@ -72,7 +149,13 @@ check.packages(packages)
 
 ```r
 library(privateEC)  # simulate data
+```
 
+```
+## Loading privateEC
+```
+
+```r
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
