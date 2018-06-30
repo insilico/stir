@@ -6,7 +6,7 @@ Under Review:
 
 [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
 
-Example STIR usage and output [STIRexample.md](https://github.com/insilico/STIR/blob/master/STIRexample.md).
+Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR/blob/master/STIRexample.md).
 
 To install:
 
