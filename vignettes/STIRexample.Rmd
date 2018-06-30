@@ -8,6 +8,7 @@ output:
     knitr:
       clean: no
       run_pandoc: no
+# if you really want to render the md and html files, run render_html.R
 ---
 
 ## Set up: 

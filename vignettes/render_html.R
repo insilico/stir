@@ -1,4 +1,5 @@
-  # utility for making vignette
+  # if you really want to create the md and html files in the vignettes folder
+  #
   # given an Rmd markdown filename prefix from the vignettes directory,
   # create the md and html files
   
