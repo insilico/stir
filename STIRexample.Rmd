@@ -112,6 +112,10 @@ t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 ### Standard t-test:
 
 ```{r}
+sort.pvalue <- function(pvalue.vec){
+  # sort attributes based on pvalues, important attributes on top
+  sort(pvalue.vec, decreasing = FALSE)
+}
 regular.ttest.results <- sapply(1:ncol(predictors.mat), regular.ttest.fn, dat = dat)
 names(regular.ttest.results) <- colnames(predictors.mat)
 regular.ttest.sorted <- sort.pvalue(regular.ttest.results)
