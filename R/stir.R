@@ -98,7 +98,6 @@ sort.pvalue <- function(pvalue.vec){
   sort(pvalue.vec, decreasing = FALSE)
 }
 
-
 #=========================================================================#
 #' diff.func
 #'
