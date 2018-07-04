@@ -5,6 +5,7 @@
 #library(roxygen2)
 #setwd()
 #create("stir")
+#document() # creates roxygen documentation
 #install("stir")  # local
 #devtools::use_vignette("STIRexample")
 # commit and push to github
