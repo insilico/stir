@@ -13,6 +13,14 @@
 #library(stir)
 
 #=========================================================================#
+#' check.packages
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' @export
 check.packages <- function(pkg){
   # check.packages function: install and load multiple R packages.
   # Check to see if packages are installed. Install them if they are not, 
