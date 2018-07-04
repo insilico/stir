@@ -84,15 +84,6 @@ sort.scores <- function(scores.vec){
 }
 
 #=========================================================================#
-#' sort.pvalue
-#'
-#' Descr
-#'
-#' @param test test
-#' @return test test 
-#' @examples
-#' Example
-#' @export
 sort.pvalue <- function(pvalue.vec){
   # sort attributes based on pvalues, important attributes on top
   sort(pvalue.vec, decreasing = FALSE)
