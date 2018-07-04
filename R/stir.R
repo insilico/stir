@@ -20,6 +20,7 @@
 #' @param test test
 #' @return test test 
 #' @examples
+#' Example
 #' @export
 check.packages <- function(pkg){
   # check.packages function: install and load multiple R packages.
@@ -34,6 +35,15 @@ check.packages <- function(pkg){
 }
 
 #=========================================================================#
+#' attr.range
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 attr.range <- function(my.mat) {
   # compute denominator of the diff formula
   # for each attribute x (column) in my.mat, max(x) -  min(x)
@@ -42,6 +52,15 @@ attr.range <- function(my.mat) {
 
 
 #=========================================================================#
+#' hamming.binary
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 hamming.binary <- function(X) {
   # compute hamming distance for a binary matrix
   D <- t(1 - X) %*% X
@@ -50,6 +69,15 @@ hamming.binary <- function(X) {
 
 
 #=========================================================================#
+#' sort.scores
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 sort.scores <- function(scores.vec){
   # sort attributes based on scores, important attributes on top
   sort(scores.vec, decreasing = TRUE)
@@ -61,6 +89,15 @@ sort.pvalue <- function(pvalue.vec){
 
 
 #=========================================================================#
+#' diff.func
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 diff.func <- function(a, b, norm.fac = 1, metric){
   # compute the difference between two vectors elementwise
   if (metric %in% c("manhattan", "hamming")) val <- abs(a - b)/norm.fac
@@ -71,6 +108,15 @@ diff.func <- function(a, b, norm.fac = 1, metric){
 
 
 #=========================================================================#
+#' get.distance
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 get.distance <- function(attr.mat, metric){
   # Compute distance between two sample rows (instances)
   # based on all attributes, normalized by max-min
@@ -89,6 +135,15 @@ get.distance <- function(attr.mat, metric){
 
 
 #=========================================================================#
+#' regular.ttest
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 regular.ttest.fn <- function(attr.idx, dat, class.idx = ncol(dat)){
   # perform t-test for each attribute with index attr.idx
   # assuming 2 classes
@@ -101,6 +156,15 @@ regular.ttest.fn <- function(attr.idx, dat, class.idx = ncol(dat)){
 
 
 #=========================================================================#
+#' find.neighbors
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 find.neighbors <- function(attr.mat, pheno.class, method, k, delta.vec = NULL){
   # create a matrix with num.samp rows, three columns
   # first column is sample Ri, second is Ri's hit, third is Ri's miss
@@ -165,6 +229,15 @@ find.neighbors <- function(attr.mat, pheno.class, method, k, delta.vec = NULL){
 
 
 #=========================================================================#
+#' make.factor
+#'
+#' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
 # multiply with 1/k (ReliefF) or 1/#hits and 1/#misses for each Ri
 make.factor <- function(x) rep(1/x, x)
 
