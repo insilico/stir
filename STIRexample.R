@@ -19,9 +19,6 @@ library(stir)
 packages <- c("ggplot2", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC")
 check.packages(packages)  # helper function in STIR
 
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
 ## Simulate data with privateEC or use already simulated:
 letsSimulate <- T
 class.lab <- "class"
@@ -67,7 +64,7 @@ if (writeData == TRUE){
 
 RF.method = "multisurf"
 metric <- "manhattan"
-# bam: I'm letting k=0 because multisurf
+# let k=0 because multisurf does not use k
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
 # t_observed_mat <- results.list[[4]]
@@ -101,7 +98,7 @@ regular.ttest.sorted <- sort.pvalue(regular.ttest.results)
 regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 
-### Aggregate results of STIR with ReleifF and MultiSURF and regular t-test:
+### Aggregate results of STIR with ReleifF and STIR with MultiSURF and regular t-test:
 
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
 # final.mat <- reshape::merge_all(t_sorted_relieff)
@@ -116,7 +113,7 @@ View(final.mat[1:15,],"Resutls: First 15 Rows")
 # Feautres are in their original order from the data, but the significant ones tend to be on the left
 # because the functional features were simulated to be first. 
 # Attributes to the left of the vertical dash line are targeted as *functional* or *predictive* in the simulation. 
-# (Dots are slightly jittered vertically to show both methods' results.)
+# (Points are slightly jittered vertically to show both methods' results.)
 
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
@@ -126,6 +123,8 @@ levels(pval.melt$variable) <- c("multiSURF", "ReliefF, k=16")
 pval.melt$value <- -log(pval.melt$value, 10)
 pval.melt$value[pval.melt$value >10] <- 10
 
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = variable)) + 
   ylim(c(-0.2,11))+
   geom_point(alpha = 0.7, position = position_jitter(w = 0, h = 0.2)) + 
