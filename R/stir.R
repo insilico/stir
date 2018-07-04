@@ -7,7 +7,7 @@
 #create("stir")
 #document() # creates roxygen documentation
 #install("stir")  # local
-#devtools::use_vignette("STIRexample")
+#devtools::use_vignette("STIRexample")  # first time you create a vignette
 # commit and push to github
 #install_github("insilico/stir") # github
 #library(stir)
