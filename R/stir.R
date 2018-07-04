@@ -161,6 +161,28 @@ make.factor <- function(x) rep(1/x, x)
 
 
 #=========================================================================#
+#' stir
+#'
+#' Compute stir statistics for attributes given nearest hit/miss matrix
+#'
+#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param neighbor.idx nearest hit/miss matrix from \code{find.neighbors}
+#' @param method neighborhood method [\code{"multisurf"} (k=0) or \code{"relieff"} (specify k)]
+#' @param m optional number of instances
+#' @param k number of nearest hits/misses for \code{"relieff"} method (k=0 for \code{"multisurf"})
+#' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
+#' @return rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
+#'
+#' @examples
+#' See vignette("STIRexample")
+#' RF.method = "multisurf"
+#' metric <- "manhattan"
+#' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
+#' results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+#' t_sorted_multisurf <- results.list$`STIR-t`
+#' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+#'
+#' @export
 stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat), 
                    k, metric, transform = "None"){
   # simple implementation of the relieff algorithm

@@ -12,7 +12,9 @@ To install:
 
     >library(devtools)
     
-    >install_github("insilico/stir")
+    >install_github("insilico/stir", build_vignettes = TRUE)
 
     >library(stir)
+    
+    >vignette("STIRexample")
 
