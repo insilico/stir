@@ -12,8 +12,10 @@ vignette: >
 
 ## Install STIR and privateEC: 
 
-```{r results='hide', message=FALSE, warning=FALSE}
+#```{r results='hide', message=FALSE, warning=FALSE}
 #knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+
+```{r install}
 rm(list = ls())
 
 if (!("devtools" %in% installed.packages()[,"Package"])){
