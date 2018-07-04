@@ -13,7 +13,7 @@
 test test
 }
 \description{
-Description
+Descr
 }
 \examples{
 Example

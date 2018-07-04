@@ -86,7 +86,7 @@ sort.scores <- function(scores.vec){
 #=========================================================================#
 #' sort.pvalue
 #'
-#' Description
+#' Descr
 #'
 #' @param test test
 #' @return test test 
