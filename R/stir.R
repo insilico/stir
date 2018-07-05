@@ -458,30 +458,28 @@ convert.pec.sim.to.inbix <- function(pEC.inputFile,inbix.file.prefix){
   ### write pEC simulated csv format to .num and .pheno format for inbix
   
   simdat <- read.csv(file=pEC.inputFile)
-  num.attr <- ncol(simdat) - 2
-  attr.names <- colnames(simdat)[2:num.attr]  # first is "X", last is "class"
-  class.lab <- colnames(simdat)[num.attr+2]
-  
-  # for .pheno. note: .pheno does not have header
-  #dat[, class.lab] <- as.factor(dat[, class.lab]) 
-  pheno <- as.numeric(simdat[, class.lab])  # class is -1/1, change to 1/2
+  # first column is X: subject id's case1, case2,...
+  # class columns is class/status: 1, 1, -1, -1, ...
+  nc <- ncol(simdat)
+  num.attr <- nc - 2
+  subjIDs <- as.character(simdat[,1])
+  pheno <- as.numeric(simdat[, nc])  # class is -1/1, change to 1/2
   pheno[pheno==1]<-2
   pheno[pheno==-1]<-1
+  predictors.mat <- simdat[,-nc]        # drop class (last) col
+  predictors.mat <- predictors.mat[,-1]  # drop subj id (first) col
+  attr.names <- colnames(predictors.mat)
   
-  # for .num
-  # header
-  predictors.mat <- simdat[, - which(colnames(simdat) == class.lab)]
-  num.samp <- nrow(simdat)
-  
+  # for inbix .pheno. note: .pheno does not have header
   # write inbix .pheno
-  subIds <- paste("Subj", rownames(simdat), sep="") # Subj is abitrary prefix
-  phenosTable <- cbind(subIds, subIds, pheno)
+  phenosTable <- cbind(subjIDs, subjIDs, pheno)
   datasimInbixPhenoFile <- paste(inbix.file.prefix, ".pheno", sep="")
   write.table(phenosTable, datasimInbixPhenoFile, quote=F, sep="\t", 
               col.names=F, row.names=F)
   
+  # .num has a header
   # write inbix numeric (.num) file/data set
-  dataTable <- cbind(subIds, subIds, predictors.mat)
+  dataTable <- cbind(subjIDs, subjIDs, predictors.mat)
   colnames(dataTable) <- c("FID", "IID", attr.names)
   datasimInbixNumFile <- paste(inbix.file.prefix, ".num", sep="")
   write.table(dataTable, datasimInbixNumFile, quote=F, sep="\t", 
