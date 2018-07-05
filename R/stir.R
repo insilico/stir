@@ -263,10 +263,11 @@ make.factor <- function(x) rep(1/x, x)
 #' @param m optional number of instances
 #' @param k number of nearest hits/misses for \code{"relieff"} method (k=0 for \code{"multisurf"})
 #' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
+#' @param transform transformation of distances (\code{"None"}, \code{"sqrt"} or \code{"neglog"})
 #' @return rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
 #'
 #' @examples
-#' See vignette("STIRexample")
+#' #See vignette("STIRexample")
 #' RF.method = "multisurf"
 #' metric <- "manhattan"
 #' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
@@ -435,3 +436,54 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   return(rs.list)
 }
 
+
+#=========================================================================#
+#' convert.pec.sim.to.inbix
+#'
+#' Reads a pEC simulated csv file, converts to inbix format and writes to working directory
+#'
+#' @param pEC.inputFile pEC-simulated data csv file name with path if needed 
+#' @param inbix.file.prefix prefix of inbix filename for .num and .pheno files
+#' @return none
+#'
+#' @examples
+#' # setwd(...) # for output
+#' infile <- "ARF_compare_1_multisurf_0.8_bias_No_k_0.1_pct.signals_1000_num.attr_100_num.samp.csv"
+#' convert.pec.sim.to.inbix(infile,"simulated1")
+#' # writes simulated1.num and simualted1.pheno
+#'
+#' @export
+convert.pec.sim.to.inbix <- function(pEC.inputFile,inbix.file.prefix){
+  
+  ### write pEC simulated csv format to .num and .pheno format for inbix
+  
+  simdat <- read.csv(file=pEC.inputFile)
+  num.attr <- ncol(simdat) - 2
+  attr.names <- colnames(simdat)[2:num.attr]  # first is "X", last is "class"
+  class.lab <- colnames(simdat)[num.attr+2]
+  
+  # for .pheno. note: .pheno does not have header
+  #dat[, class.lab] <- as.factor(dat[, class.lab]) 
+  pheno <- as.numeric(simdat[, class.lab])  # class is -1/1, change to 1/2
+  pheno[pheno==1]<-2
+  pheno[pheno==-1]<-1
+  
+  # for .num
+  # header
+  predictors.mat <- simdat[, - which(colnames(simdat) == class.lab)]
+  num.samp <- nrow(simdat)
+  
+  # write inbix .pheno
+  subIds <- paste("Subj", rownames(simdat), sep="") # Subj is abitrary prefix
+  phenosTable <- cbind(subIds, subIds, pheno)
+  datasimInbixPhenoFile <- paste(inbix.file.prefix, ".pheno", sep="")
+  write.table(phenosTable, datasimInbixPhenoFile, quote=F, sep="\t", 
+              col.names=F, row.names=F)
+  
+  # write inbix numeric (.num) file/data set
+  dataTable <- cbind(subIds, subIds, predictors.mat)
+  colnames(dataTable) <- c("FID", "IID", attr.names)
+  datasimInbixNumFile <- paste(inbix.file.prefix, ".num", sep="")
+  write.table(dataTable, datasimInbixNumFile, quote=F, sep="\t", 
+              col.names=T, row.names=F)
+}

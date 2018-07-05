@@ -19,6 +19,8 @@ stir(attr.mat, neighbor.idx, method, m = nrow(attr.mat), k, metric,
 \item{k}{number of nearest hits/misses for \code{"relieff"} method (k=0 for \code{"multisurf"})}
 
 \item{metric}{for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})}
+
+\item{transform}{transformation of distances (\code{"None"}, \code{"sqrt"} or \code{"neglog"})}
 }
 \value{
 rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
@@ -27,7 +29,7 @@ rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
 Compute stir statistics for attributes given nearest hit/miss matrix
 }
 \examples{
-See vignette("STIRexample")
+#See vignette("STIRexample")
 RF.method = "multisurf"
 metric <- "manhattan"
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
