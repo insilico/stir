@@ -357,11 +357,11 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
     attr.diff.trans.hit.rf <- attr.diff.trans.hit # save for original relief scores later
     
     mu.misses <- sum(attr.diff.trans.miss)/n.samp  
-    variance.misses <- sum( miss.fac * (attr.diff.miss-mu.misses)^2 )/(n.samp)
+    variance.misses <- sum( one_over_k_miss.fac * (attr.diff.miss-mu.misses)^2 )/(n.samp)
     s.misses <- sqrt(variance.misses)
     
     mu.hits <- sum(attr.diff.trans.hit)/n.samp  #bam
-    variance.hits <- sum( hit.fac * (attr.diff.hit-mu.hits)^2 )/(n.samp)
+    variance.hits <- sum( one_over_k_hits.fac * (attr.diff.hit-mu.hits)^2 )/(n.samp)
     s.hits <- sqrt(variance.hits)
     
     s.adj <- 0
