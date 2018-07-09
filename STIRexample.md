@@ -1,7 +1,7 @@
 STIR (STatistical Inference Relief) Example
 ================
 Brett McKinney and Trang Le
-2018-07-04
+2018-07-09
 
 Install STIR and privateEC:
 ---------------------------
@@ -33,44 +33,47 @@ Simulate data with privateEC
 ----------------------------
 
 ``` r
-letsSimulate <- T   # F to use previously simulated data
+letsSimulate <- F   # F to use previously simulated data
 class.lab <- "class"
 writeData <- F
 
+num.samp <- 100
+num.attr <- 1000
+pct.signals <- 0.1
+bias <- 0.4
+
+pec_simFile <- paste("pec_simulated", "bias", bias, 
+                             "pct.signals", pct.signals,
+                             "num.attr", num.attr, "num.samp", num.samp, sep = "_")
+pec_simFile <- paste(pec_simFile,".csv",sep="")
+
 if (letsSimulate == TRUE){
-  n.samp <- 100
-  num.samp <- n.samp
-  num.attr <- 1000
-  pct.signals <- 0.1
-  bias <- 0.4
-  run.permute <- TRUE
   is.main <- F  # T: simulate main effects, F: interactions
 
   if (is.main){ # make this main effect sim if TRUE
-    sim.data <- createSimulation(num.samples = n.samp, num.variables = num.attr,
+    sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
                                  pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2, 
                                  bias = bias, sim.type = "mainEffect", verbose = FALSE)
   } else { # interaction simulation
-    sim.data <- createSimulation(num.samples = n.samp, num.variables = num.attr,
+    sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
                                  pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2,
                                  bias = bias, sim.type = "interactionErdos", verbose = FALSE)
   }
   dat <- rbind(sim.data$train, sim.data$holdout)
+  predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
 } else { # optional: use provided data
-  dat <- read.csv("ARF_compare_1_multisurf_0.8_bias_No_k_0.1_pct.signals_1000_num.attr_100_num.samp.csv")
-  n.samp <- nrow(dat)
+  dat <- read.csv(pec_simFile)
+  dat <- dat[,-1] # written file has first X column with subject names
+  predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
 }
 
 dat[, class.lab] <- as.factor(dat[, class.lab]) 
 pheno.class <- dat[, class.lab]
-predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
 attr.names <- colnames(predictors.mat)
 num.samp <- nrow(dat)
 
 if (writeData == TRUE){
-  write.csv(dat, file = paste("ARF_compare", RF.method, bias, "bias", 
-                             pct.signals, "pct.signals",
-                             num.attr, "num.attr", num.samp, "num.samp.csv", sep = "_"))
+  write.csv(dat, file = pec_simFile)
 }
 ```
 
@@ -86,7 +89,20 @@ results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metr
 t_sorted_multisurf <- results.list$`STIR-t`
 # vecW_observed <- results.list[[1]]
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+(t_sorted_multisurf[1:10,])
 ```
+
+    ##             t.stat       t.pval   cohen.d   t.pval.adj attribute
+    ## simvar10 12.209141 6.381741e-34 0.4072808 6.381741e-31  simvar10
+    ## simvar38 10.644402 2.255355e-26 0.3550831 2.253099e-23  simvar38
+    ## simvar14 10.138116 3.903835e-24 0.3381941 3.896027e-21  simvar14
+    ## simvar41  9.315558 1.028010e-20 0.3107547 1.024926e-17  simvar41
+    ## simvar60  9.305855 1.123934e-20 0.3104310 1.119438e-17  simvar60
+    ## simvar16  9.103587 7.076186e-20 0.3036836 7.040806e-17  simvar16
+    ## simvar94  8.976309 2.209115e-19 0.2994378 2.195860e-16  simvar94
+    ## simvar1   8.812766 9.331929e-19 0.2939822 9.266605e-16   simvar1
+    ## simvar79  8.593500 6.195370e-18 0.2866678 6.145807e-15  simvar79
+    ## simvar86  8.455449 1.994026e-17 0.2820626 1.976080e-14  simvar86
 
 ### Run STIR-ReliefF constant *k* = ⌊(*m* − 1)/6⌋:
 
@@ -96,7 +112,7 @@ ReliefF with *k* = ⌊(*m* − 1)/6⌋ (where m is the number of samples
 t_sorted_relieff <- list()
 i <- 0
 RF.method = "relieff"
-k <- floor(n.samp/6)  # k=m/6 should be similar to MultiSURF
+k <- floor(num.samp/6)  # k=m/6 should be similar to MultiSURF
 i <- i+1  # if you want to use k for loop
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
@@ -127,7 +143,10 @@ final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_so
 
 # Are the columns sorted separately? There is only one column of attribute names 
 # View(final.mat[1:15,],"Resutls: First 15 Rows")  # View has a problem with Rmarkdown
-# write.csv(final.mat,file="final.mat.csv")
+writeResults <- F
+if (writeResults == T){
+write.csv(final.mat,file="final.mat.csv")
+}
 ```
 
 Plot STIR significance of attributes:
@@ -154,7 +173,7 @@ t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = 
   geom_hline(yintercept = -log(0.05, 10), linetype = 4, color = "grey") 
 ```
 
-Plot of -log10(p-values) of attributes. Attributes are in their original order from the data, but the significant attributes tend to be on the left because the simulated functional attributes were targeted to be first. Thus, attributes to the left of the vertical dashed line are targeted as *functional* or *predictive* in the simulation. However, for interactions, some attributes on the right may be functional due to network co-expression. (Note: small p-values $ &lt; e^{-10}$ are plotted as *e*<sup>−10</sup> for scaling. Points are slightly jittered vertically to show results of both methods.)
+Plot of -log10(p-values) of attributes. Attributes are in their original order from the data, but the significant attributes tend to be on the left because the simulated functional attributes were targeted to be first. Thus, attributes to the left of the vertical dashed line are targeted as *functional* or *predictive* in the simulation. However, for interactions, some attributes on the right may be functional due to network co-expression. (Note: p-values less than *e*<sup>−10</sup> are plotted as *e*<sup>−10</sup> for scaling. Points are slightly jittered vertically to show results of both methods.)
 
 ``` r
 show(t4)

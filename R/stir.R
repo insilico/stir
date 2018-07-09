@@ -7,7 +7,7 @@
 #create("stir")
 #document() # creates roxygen documentation
 #install("stir")  # local
-#devtools::use_vignette("STIRexample")  # first time you create a vignette
+#devtools::use_vignette("STIRvignette")  # first time you create a vignette
 # commit and push to github
 #install_github("insilico/stir") # github
 #library(stir)
@@ -267,7 +267,7 @@ make.factor <- function(x) rep(1/x, x)
 #' @return rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
 #'
 #' @examples
-#' #See vignette("STIRexample")
+#' #See vignette("STIRvignette")
 #' RF.method = "multisurf"
 #' metric <- "manhattan"
 #' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
@@ -287,8 +287,8 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   vecW <- rep(0, num.attr)
   names(vecW) <- colnames(attr.mat)
   range.vec <- attr.range(attr.mat)
-  one_over_range <- 1/range.vec
-  one_over_m <- 1/n.samp
+  one_over_range <- 1/range.vec   # max - min of all attribtes
+  one_over_m <- 1/n.samp          # m in paper notation
   
   # Initialize Relief-F T-stat and Anova F-stat
   arf.tstats <- matrix(0, nrow = num.attr, ncol = 3)
@@ -306,9 +306,9 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   
   hit.df <- neighbor.idx[[1]]
   miss.df <- neighbor.idx[[2]]  
-  n.misses <- nrow(miss.df)
-  n.hits <- nrow(hit.df)
-  avg.k <- (n.misses + n.hits)/(2*n.samp)
+  n.misses <- nrow(miss.df)    # num miss pairs (m*k for ReleifF)
+  n.hits <- nrow(hit.df)       # num hit  pairs (m*k for ReleifF)
+  #avg.k <- (n.misses + n.hits)/(2*n.samp)  # for subsampling
   
   hit.idx <- hit.df[, "hit_idx"]
   miss.idx <- miss.df[, "miss_idx"]
@@ -317,8 +317,8 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   
   nhit.a <- as.numeric(table(Ri.hit.idx))
   nmiss.a <- as.numeric(table(Ri.miss.idx))
-  hit.fac <- unlist(lapply(nhit.a, make.factor)) # k_H_i vector; 1/k in general
-  miss.fac <- unlist(lapply(nmiss.a, make.factor)) # k_M_i vector; 1/k in general
+  one_over_k_hits.fac <- unlist(lapply(nhit.a, make.factor))   # k_H_i vector; 1/k in general
+  one_over_k_miss.fac <- unlist(lapply(nmiss.a, make.factor)) # k_M_i vector; 1/k in general
   
   for (attr.idx in seq(1, num.attr)){
 
@@ -351,27 +351,26 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
       attr.diff.trans.hit <- -log(attr.diff.hit)
     }
 
-    attr.diff.trans.miss <- attr.diff.trans.miss * miss.fac
-    attr.diff.trans.hit <- attr.diff.trans.hit * hit.fac
+    attr.diff.trans.miss <- attr.diff.trans.miss * one_over_k_miss.fac
+    attr.diff.trans.hit <- attr.diff.trans.hit * one_over_k_hits.fac
     attr.diff.trans.miss.rf <- attr.diff.trans.miss # save for original relief scores later
     attr.diff.trans.hit.rf <- attr.diff.trans.hit # save for original relief scores later
     
-    attr.diff.trans.miss <- attr.diff.trans.miss*n.misses # renormalize: this is the actual M_a (sum, not mean). We are all OKAY.
-    s.misses <- sd(attr.diff.trans.miss)
-    mu.misses <- mean(attr.diff.trans.miss)
-
-    attr.diff.trans.hit <- attr.diff.trans.hit*n.hits # renormalize: this is the actual H_a (sum, not mean). We are all OKAY.
-    s.hits <- sd(attr.diff.trans.hit)
-    mu.hits <- mean(attr.diff.trans.hit)
+    mu.misses <- sum(attr.diff.trans.miss)/n.samp  
+    variance.misses <- sum( miss.fac * (attr.diff.miss-mu.misses)^2 )/(n.samp)
+    s.misses <- sqrt(variance.misses)
+    
+    mu.hits <- sum(attr.diff.trans.hit)/n.samp  #bam
+    variance.hits <- sum( hit.fac * (attr.diff.hit-mu.hits)^2 )/(n.samp)
+    s.hits <- sqrt(variance.hits)
     
     s.adj <- 0
-    s.pooled <- sqrt(((n.misses -1)*s.misses^2 + (n.hits - 1)*s.hits^2)/(n.hits + n.misses - 2))
+    s.pooled <- sqrt(((n.misses -1)*variance.misses + (n.hits - 1)*variance.hits)/(n.hits + n.misses - 2))
     t.stat.man <- (mu.misses - mu.hits)/(s.pooled*sqrt(1/n.misses + 1/n.hits))
 
-    
     cohen.d <- t.stat.man*sqrt(1/n.misses+ 1/n.hits)
-    r.miss <- s.misses^2/n.misses
-    r.hit <- s.hits^2/n.hits
+    r.miss <- variance.misses/n.misses
+    r.hit <- variance.hits/n.hits
     # df <- floor((r.miss + r.hit)^2/(r.miss^2/(n.misses - 1) + r.hit^2/(n.hits - 1))) # degrees of freedom
     df <- n.hits + n.misses - 2
     man.pval <- pt(q = t.stat.man, df = df, lower.tail = F)

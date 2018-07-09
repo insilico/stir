@@ -29,7 +29,7 @@ rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
 Compute stir statistics for attributes given nearest hit/miss matrix
 }
 \examples{
-#See vignette("STIRexample")
+#See vignette("STIRvignette")
 RF.method = "multisurf"
 metric <- "manhattan"
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)

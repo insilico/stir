@@ -14,5 +14,5 @@ To install:
 
     >library(stir)
     
-    >vignette("STIRexample")
+    >vignette("STIRvignette")
 
