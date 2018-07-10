@@ -287,7 +287,7 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   vecW <- rep(0, num.attr)
   names(vecW) <- colnames(attr.mat)
   range.vec <- attr.range(attr.mat)
-  one_over_range <- 1/range.vec   # max - min of all attribtes
+  one_over_range <- 1/range.vec   # 1/(max - min) of all attribtes
   one_over_m <- 1/n.samp          # m in paper notation
   
   # Initialize Relief-F T-stat and Anova F-stat
@@ -318,7 +318,7 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   nhit.a <- as.numeric(table(Ri.hit.idx))
   nmiss.a <- as.numeric(table(Ri.miss.idx))
   one_over_k_hits.fac <- unlist(lapply(nhit.a, make.factor))   # k_H_i vector; 1/k in general
-  one_over_k_miss.fac <- unlist(lapply(nmiss.a, make.factor)) # k_M_i vector; 1/k in general
+  one_over_k_miss.fac <- unlist(lapply(nmiss.a, make.factor))  # k_M_i vector; 1/k in general
   
   for (attr.idx in seq(1, num.attr)){
 
@@ -353,8 +353,6 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
 
     attr.diff.trans.miss <- attr.diff.trans.miss * one_over_k_miss.fac
     attr.diff.trans.hit <- attr.diff.trans.hit * one_over_k_hits.fac
-    attr.diff.trans.miss.rf <- attr.diff.trans.miss # save for original relief scores later
-    attr.diff.trans.hit.rf <- attr.diff.trans.hit # save for original relief scores later
     
     mu.misses <- sum(attr.diff.trans.miss)/n.samp  
     variance.misses <- sum( one_over_k_miss.fac * (attr.diff.miss-mu.misses)^2 )/(n.samp)
@@ -411,7 +409,8 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
     #######################################   
     
 
-    vecW[attr.idx] <- (sum(attr.diff.trans.miss.rf) - sum(attr.diff.trans.hit.rf)) 
+    vecW[attr.idx] <- mu.misses - mu.hits
+    #(sum(attr.diff.trans.miss.rf) - sum(attr.diff.trans.hit.rf)) 
     
   }
   
