@@ -1,7 +1,7 @@
 STIR (STatistical Inference Relief) Example
 ================
 Brett McKinney and Trang Le
-2018-07-09
+2018-07-12
 
 Install STIR and privateEC:
 ---------------------------
@@ -33,32 +33,27 @@ Simulate data with privateEC
 ----------------------------
 
 ``` r
-letsSimulate <- F   # F to use previously simulated data
+letsSimulate <- T   # F to use previously simulated data
 class.lab <- "class"
-writeData <- F
+writeData <- letsSimulate  # usually the same
+writeResults <- T
 
 num.samp <- 100
 num.attr <- 1000
 pct.signals <- 0.1
 bias <- 0.4
+#sim.type <- "mainEffect"
+sim.type <- "interactionErdos"
 
-pec_simFile <- paste("pec_simulated", "bias", bias, 
+pec_simFile <- paste("pec_simulated", sim.type, "bias", bias, 
                              "pct.signals", pct.signals,
                              "num.attr", num.attr, "num.samp", num.samp, sep = "_")
 pec_simFile <- paste(pec_simFile,".csv",sep="")
 
 if (letsSimulate == TRUE){
-  is.main <- F  # T: simulate main effects, F: interactions
-
-  if (is.main){ # make this main effect sim if TRUE
     sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
                                  pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2, 
-                                 bias = bias, sim.type = "mainEffect", verbose = FALSE)
-  } else { # interaction simulation
-    sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
-                                 pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2,
-                                 bias = bias, sim.type = "interactionErdos", verbose = FALSE)
-  }
+                                 bias = bias, sim.type = sim.type, verbose = FALSE)
   dat <- rbind(sim.data$train, sim.data$holdout)
   predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
 } else { # optional: use provided data
@@ -85,24 +80,26 @@ metric <- "manhattan"
 # let k=0 because multisurf does not use k
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-# t_observed_mat <- results.list[[4]]
-t_sorted_multisurf <- results.list$`STIR-t`
-# vecW_observed <- results.list[[1]]
-t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+t_sorted_multisurf <- results.list$`STIR-t`[, -3]  # remove cohen-d
+colnames(t_sorted_multisurf) <- paste(c("t.stat", "t.pval", "t.pval.adj"), "stir", sep=".")
 (t_sorted_multisurf[1:10,])
 ```
 
-    ##             t.stat       t.pval   cohen.d   t.pval.adj attribute
-    ## simvar10 12.209141 6.381741e-34 0.4072808 6.381741e-31  simvar10
-    ## simvar38 10.644402 2.255355e-26 0.3550831 2.253099e-23  simvar38
-    ## simvar14 10.138116 3.903835e-24 0.3381941 3.896027e-21  simvar14
-    ## simvar41  9.315558 1.028010e-20 0.3107547 1.024926e-17  simvar41
-    ## simvar60  9.305855 1.123934e-20 0.3104310 1.119438e-17  simvar60
-    ## simvar16  9.103587 7.076186e-20 0.3036836 7.040806e-17  simvar16
-    ## simvar94  8.976309 2.209115e-19 0.2994378 2.195860e-16  simvar94
-    ## simvar1   8.812766 9.331929e-19 0.2939822 9.266605e-16   simvar1
-    ## simvar79  8.593500 6.195370e-18 0.2866678 6.145807e-15  simvar79
-    ## simvar86  8.455449 1.994026e-17 0.2820626 1.976080e-14  simvar86
+    ##          t.stat.stir  t.pval.stir t.pval.adj.stir
+    ## simvar63   11.844177 3.827384e-32    3.827384e-29
+    ## simvar1    11.810575 5.635538e-32    5.629902e-29
+    ## simvar55   11.241182 3.399137e-29    3.392339e-26
+    ## simvar14   10.769340 5.483913e-27    5.467461e-24
+    ## simvar20   10.642974 2.067472e-26    2.059202e-23
+    ## simvar34   10.315815 6.000613e-25    5.970610e-22
+    ## simvar32   10.231040 1.413502e-24    1.405021e-21
+    ## simvar98   10.073603 6.819262e-24    6.771527e-21
+    ## simvar56    9.964957 1.993471e-23    1.977523e-20
+    ## simvar85    9.827012 7.661615e-23    7.592661e-20
+
+``` r
+t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf) # adds a column for merge
+```
 
 ### Run STIR-ReliefF constant *k* = ⌊(*m* − 1)/6⌋:
 
@@ -118,6 +115,22 @@ neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, meth
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
 t_sorted_relieff[[i]] <- results.list$`STIR-t`[, -3]
 colnames(t_sorted_relieff[[i]]) <- paste(c("t.stat", "t.pval", "t.pval.adj"), k, sep=".")
+(t_sorted_relieff[[i]][1:10,])
+```
+
+    ##          t.stat.16    t.pval.16 t.pval.adj.16
+    ## simvar1  11.977493 1.136481e-32  1.136481e-29
+    ## simvar63 11.178031 8.746913e-29  8.738166e-26
+    ## simvar55 10.371823 4.102019e-25  4.093815e-22
+    ## simvar56 10.223259 1.828220e-24  1.822735e-21
+    ## simvar34 10.150724 3.765207e-24  3.750146e-21
+    ## simvar14 10.149205 3.822400e-24  3.803288e-21
+    ## simvar20 10.016505 1.415628e-23  1.407134e-20
+    ## simvar85  9.801441 1.142475e-22  1.134478e-19
+    ## simvar32  9.724861 2.379014e-22  2.359982e-19
+    ## simvar5   9.601221 7.688314e-22  7.619119e-19
+
+``` r
 t_sorted_relieff[[i]]$attribute <- rownames(t_sorted_relieff[[i]])
 t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 ```
@@ -139,11 +152,11 @@ regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 ``` r
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
-# final.mat <- reshape::merge_all(t_sorted_relieff)
+#final.mat <- reshape::merge_all(t_sorted_relieff)
 
 # Are the columns sorted separately? There is only one column of attribute names 
 # View(final.mat[1:15,],"Resutls: First 15 Rows")  # View has a problem with Rmarkdown
-writeResults <- F
+
 if (writeResults == T){
 write.csv(final.mat,file="final.mat.csv")
 }
@@ -156,7 +169,7 @@ Plot STIR significance of attributes:
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
 
-pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj", "t.pval.adj.16")], id.vars = 1)
+pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj.stir", "t.pval.adj.16")], id.vars = 1)
 levels(pval.melt$variable) <- c("multiSURF", "ReliefF, k=16")
 pval.melt$value <- -log(pval.melt$value, 10)
 pval.melt$value[pval.melt$value >10] <- 10

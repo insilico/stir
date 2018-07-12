@@ -40,30 +40,25 @@ check.packages(packages)  # helper function from STIR
 ```{r simulate, echo=T, results='hide'}
 letsSimulate <- T   # F to use previously simulated data
 class.lab <- "class"
-writeData <- T
+writeData <- F  # usually same as letsSimulate
+writeResults <- F
 
 num.samp <- 100
 num.attr <- 1000
 pct.signals <- 0.1
 bias <- 0.4
+#sim.type <- "mainEffect"
+sim.type <- "interactionErdos"
 
-pec_simFile <- paste("pec_simulated", "bias", bias, 
+pec_simFile <- paste("pec_simulated", sim.type, "bias", bias, 
                              "pct.signals", pct.signals,
                              "num.attr", num.attr, "num.samp", num.samp, sep = "_")
 pec_simFile <- paste(pec_simFile,".csv",sep="")
 
 if (letsSimulate == TRUE){
-  is.main <- F  # T: simulate main effects, F: interactions
-
-  if (is.main){ # make this main effect sim if TRUE
     sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
                                  pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2, 
-                                 bias = bias, sim.type = "mainEffect", verbose = FALSE)
-  } else { # interaction simulation
-    sim.data <- createSimulation(num.samples = num.samp, num.variables = num.attr,
-                                 pct.signals = pct.signals, pct.train = 1/2, pct.holdout = 1/2,
-                                 bias = bias, sim.type = "interactionErdos", verbose = FALSE)
-  }
+                                 bias = bias, sim.type = sim.type, verbose = FALSE)
   dat <- rbind(sim.data$train, sim.data$holdout)
   predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
 } else { # optional: use provided data
@@ -90,11 +85,10 @@ metric <- "manhattan"
 # let k=0 because multisurf does not use k
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-# t_observed_mat <- results.list[[4]]
-t_sorted_multisurf <- results.list$`STIR-t`
-# vecW_observed <- results.list[[1]]
-t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+t_sorted_multisurf <- results.list$`STIR-t`[, -3]  # remove cohen-d
+colnames(t_sorted_multisurf) <- paste(c("t.stat", "t.pval", "t.pval.adj"), "stir", sep=".")
 (t_sorted_multisurf[1:10,])
+t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf) # adds a column for merge
 ```
 
 ### Run STIR-ReliefF constant $k=\lfloor(m-1)/6\rfloor$:
@@ -110,6 +104,7 @@ neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, meth
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
 t_sorted_relieff[[i]] <- results.list$`STIR-t`[, -3]
 colnames(t_sorted_relieff[[i]]) <- paste(c("t.stat", "t.pval", "t.pval.adj"), k, sep=".")
+(t_sorted_relieff[[i]][1:10,])
 t_sorted_relieff[[i]]$attribute <- rownames(t_sorted_relieff[[i]])
 t_sorted_relieff[[i+1]] <- t_sorted_multisurf
 ```
@@ -135,9 +130,9 @@ final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_so
 
 # Are the columns sorted separately? There is only one column of attribute names 
 # View(final.mat[1:15,],"Resutls: First 15 Rows")  # View has a problem with Rmarkdown
-writeResults <- F
+
 if (writeResults == T){
-write.csv(final.mat,file="final.mat.csv")
+write.csv(final.mat[,1:4],file="final.mat.csv")
 }
 ```
 
@@ -147,7 +142,7 @@ write.csv(final.mat,file="final.mat.csv")
 rownames(final.mat) <- final.mat$attribute
 pval.df <- final.mat[attr.names, ]
 
-pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj", "t.pval.adj.16")], id.vars = 1)
+pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj.stir", "t.pval.adj.16")], id.vars = 1)
 levels(pval.melt$variable) <- c("multiSURF", "ReliefF, k=16")
 pval.melt$value <- -log(pval.melt$value, 10)
 pval.melt$value[pval.melt$value >10] <- 10
