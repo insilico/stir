@@ -4,17 +4,38 @@
 \alias{find.neighbors}
 \title{find.neighbors}
 \usage{
-find.neighbors(attr.mat, pheno.class, method, k, delta.vec = NULL)
+find.neighbors(attr.mat, pheno.class, metric = "manhattan",
+  method = "multisurf", k = 0, sd.vec = NULL, sd.frac = 0.5)
 }
 \arguments{
-\item{test}{test}
+\item{attr.mat}{m x p matrix of m instances and p attributes}
+
+\item{pheno.class}{length m vector of binary class status (usually -1/1)  \code{find.neighbors}}
+
+\item{metric}{for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})}
+
+\item{method}{neighborhood method [\code{"multisurf"} or \code{"surf"} (k=0) or \code{"relieff"} (specify k)]}
+
+\item{k}{number of constant nearest hits/misses for \code{"relieff"}}
+
+\item{sd.frac}{multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
+The multiSURF default is sd.frac=0.5: mean - sd/2}
 }
 \value{
-test test
+return variable (hitmiss.list) is a two-element: hitmiss.list[[1]] (hits) and hitmiss.list[[2]] (misses). 
+Each list has two columns: $Ri_idx is the first column (instances) in both lists. The second column is 
+$hit_idx (nearest hits for the first column instance) for list [[1]] and $miss_idx (nearest misses) for list [[2]].
 }
 \description{
-Description
+Find the nearest hit/miss matrices
 }
 \examples{
-Example
+#See vignette("STIRvignette")
+RF.method = "multisurf"
+metric <- "manhattan"
+neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
+results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+t_sorted_multisurf <- results.list$STIR_T
+t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+
 }

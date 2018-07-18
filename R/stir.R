@@ -168,14 +168,30 @@ regular.ttest.fn <- function(attr.idx, dat, class.idx = ncol(dat)){
 #=========================================================================#
 #' find.neighbors
 #'
-#' Description
+#' Find the nearest hit/miss matrices
 #'
-#' @param test test
-#' @return test test 
+#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param pheno.class length m vector of binary class status (usually -1/1)  \code{find.neighbors}
+#' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
+#' @param method neighborhood method [\code{"multisurf"} or \code{"surf"} (k=0) or \code{"relieff"} (specify k)]
+#' @param k number of constant nearest hits/misses for \code{"relieff"}
+#' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
+#' The multiSURF default is sd.frac=0.5: mean - sd/2 
+#' @return return variable (hitmiss.list) is a two-element: hitmiss.list[[1]] (hits) and hitmiss.list[[2]] (misses). 
+#' Each list has two columns: $Ri_idx is the first column (instances) in both lists. The second column is 
+#' $hit_idx (nearest hits for the first column instance) for list [[1]] and $miss_idx (nearest misses) for list [[2]].
+#'
 #' @examples
-#' Example
+#' #See vignette("STIRvignette")
+#' RF.method = "multisurf"
+#' metric <- "manhattan"
+#' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
+#' results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+#' t_sorted_multisurf <- results.list$STIR_T
+#' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+#'
 #' @export
-find.neighbors <- function(attr.mat, pheno.class, method, k, delta.vec = NULL){
+find.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
   # create a matrix with num.samp rows, three columns
   # first column is sample Ri, second is Ri's hit, third is Ri's miss
   
@@ -208,10 +224,14 @@ find.neighbors <- function(attr.mat, pheno.class, method, k, delta.vec = NULL){
     miss.idx <- neighbor.idx[, c(1, 3)]
     
   } else {
-    if (method == "surf") Ri.radius <- rep(radius.surf, num.samp) # use constance radius
+    #if (method == "surf") Ri.radius <- rep(radius.surf, num.samp) # use constance radius
+    if (method == "surf"){
+      sd.const <- sd(dist.mat[upper.tri(dist.mat)])  # bam: constant standard deviation
+      Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) # use constant radius and sd
+    }
     if (method == "multisurf"){
-      if (is.null(delta.vec)) delta.vec <- sapply(1:num.samp, function(x) sd(dist.mat[-x, x]))
-      Ri.radius <- colSums(dist.mat)/(num.samp - 1) - delta.vec/2 # use adaptive radius
+      if (is.null(sd.vec)) sd.vec <- sapply(1:num.samp, function(x) sd(dist.mat[-x, x]))
+      Ri.radius <- colSums(dist.mat)/(num.samp - 1) - sd.frac*sd.vec # use adaptive radius
     }
     
     hit.idx <- data.frame()
@@ -234,7 +254,8 @@ find.neighbors <- function(attr.mat, pheno.class, method, k, delta.vec = NULL){
     colnames(hit.idx) <- c("Ri_idx", "hit_idx")
     colnames(miss.idx) <- c("Ri_idx", "miss_idx")
   }
-  list(hit.idx, miss.idx)
+  hitmiss.list <- list(hit.idx, miss.idx)
+  return(hitmiss.list)
 }
 
 
@@ -258,13 +279,13 @@ make.factor <- function(x) rep(1/x, x)
 #' Compute stir statistics for attributes given nearest hit/miss matrix
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
-#' @param neighbor.idx nearest hit/miss matrix from \code{find.neighbors}
+#' @param neighbor.idx nearest hit/miss matrices, output from \code{find.neighbors}
 #' @param method neighborhood method [\code{"multisurf"} (k=0) or \code{"relieff"} (specify k)]
 #' @param m optional number of instances
 #' @param k number of nearest hits/misses for \code{"relieff"} method (k=0 for \code{"multisurf"})
 #' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
 #' @param transform transformation of distances (\code{"None"}, \code{"sqrt"} or \code{"neglog"})
-#' @return rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
+#' @return rs.list: OriRelief (original Relief score), STIR_T (t-stat stur), STIR_F (F-stat stir)
 #'
 #' @examples
 #' #See vignette("STIRvignette")
@@ -272,7 +293,7 @@ make.factor <- function(x) rep(1/x, x)
 #' metric <- "manhattan"
 #' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 #' results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-#' t_sorted_multisurf <- results.list$`STIR-t`
+#' t_sorted_multisurf <- results.list$STIR_T
 #' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
 #'
 #' @export
@@ -429,8 +450,8 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   arf.fstats.ordered$F.pval.adj <- p.adjust(arf.fstats.ordered[, "F.pval"])
   # arf.tstats.ordered.samp$t.pval.adj <- p.adjust(arf.tstats.ordered.samp[, "t.pval"])
   # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
-  rs.list <- list(relief.score.df, arf.tstats.ordered, arf.fstats.ordered)
-  names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
+  rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
+  #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
   return(rs.list)
 }
 

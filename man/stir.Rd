@@ -10,7 +10,7 @@ stir(attr.mat, neighbor.idx, method, m = nrow(attr.mat), k, metric,
 \arguments{
 \item{attr.mat}{m x p matrix of m instances and p attributes}
 
-\item{neighbor.idx}{nearest hit/miss matrix from \code{find.neighbors}}
+\item{neighbor.idx}{nearest hit/miss matrices, output from \code{find.neighbors}}
 
 \item{method}{neighborhood method [\code{"multisurf"} (k=0) or \code{"relieff"} (specify k)]}
 
@@ -23,7 +23,7 @@ stir(attr.mat, neighbor.idx, method, m = nrow(attr.mat), k, metric,
 \item{transform}{transformation of distances (\code{"None"}, \code{"sqrt"} or \code{"neglog"})}
 }
 \value{
-rs.list list: relief.score.df, arf.tstats.ordered, arf.fstats.ordered
+rs.list: OriRelief (original Relief score), STIR_T (t-stat stur), STIR_F (F-stat stir)
 }
 \description{
 Compute stir statistics for attributes given nearest hit/miss matrix
@@ -34,7 +34,7 @@ RF.method = "multisurf"
 metric <- "manhattan"
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-t_sorted_multisurf <- results.list$`STIR-t`
+t_sorted_multisurf <- results.list$STIR_T
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
 
 }
