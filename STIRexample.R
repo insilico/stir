@@ -68,7 +68,7 @@ metric <- "manhattan"
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
 # t_observed_mat <- results.list[[4]]
-t_sorted_multisurf <- results.list$`STIR-t`
+t_sorted_multisurf <- results.list$STIR_T
 # vecW_observed <- results.list[[1]]
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
 
@@ -83,7 +83,7 @@ k <- floor(n.samp/6)  # k=m/6 should be similar to MultiSURF
 i <- i+1  # if you want to use k for loop
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-t_sorted_relieff[[i]] <- results.list$`STIR-t`[, -3]
+t_sorted_relieff[[i]] <- results.list$STIR_T[, -3]
 colnames(t_sorted_relieff[[i]]) <- paste(c("t.stat", "t.pval", "t.pval.adj"), k, sep=".")
 t_sorted_relieff[[i]]$attribute <- rownames(t_sorted_relieff[[i]])
 t_sorted_relieff[[i+1]] <- t_sorted_multisurf

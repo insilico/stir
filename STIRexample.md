@@ -1,7 +1,7 @@
 STIR (STatistical Inference Relief) Example
 ================
 Brett McKinney and Trang Le
-2018-07-12
+2018-07-18
 
 Install STIR and privateEC:
 ---------------------------
@@ -35,8 +35,8 @@ Simulate data with privateEC
 ``` r
 letsSimulate <- T   # F to use previously simulated data
 class.lab <- "class"
-writeData <- letsSimulate  # usually the same
-writeResults <- T
+writeData <- F  # usually the same as letsSimulate
+writeResults <- F
 
 num.samp <- 100
 num.attr <- 1000
@@ -80,22 +80,22 @@ metric <- "manhattan"
 # let k=0 because multisurf does not use k
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-t_sorted_multisurf <- results.list$`STIR-t`[, -3]  # remove cohen-d
+t_sorted_multisurf <- results.list$STIR_T[, -3]  # remove cohen-d
 colnames(t_sorted_multisurf) <- paste(c("t.stat", "t.pval", "t.pval.adj"), "stir", sep=".")
 (t_sorted_multisurf[1:10,])
 ```
 
     ##          t.stat.stir  t.pval.stir t.pval.adj.stir
-    ## simvar63   11.844177 3.827384e-32    3.827384e-29
-    ## simvar1    11.810575 5.635538e-32    5.629902e-29
-    ## simvar55   11.241182 3.399137e-29    3.392339e-26
-    ## simvar14   10.769340 5.483913e-27    5.467461e-24
-    ## simvar20   10.642974 2.067472e-26    2.059202e-23
-    ## simvar34   10.315815 6.000613e-25    5.970610e-22
-    ## simvar32   10.231040 1.413502e-24    1.405021e-21
-    ## simvar98   10.073603 6.819262e-24    6.771527e-21
-    ## simvar56    9.964957 1.993471e-23    1.977523e-20
-    ## simvar85    9.827012 7.661615e-23    7.592661e-20
+    ## simvar53   10.405782 2.688475e-25    2.688475e-22
+    ## simvar69    8.979117 2.179423e-19    2.177244e-16
+    ## simvar19    8.681967 2.931270e-18    2.925408e-15
+    ## simvar49    8.402737 3.128784e-17    3.119397e-14
+    ## simvar10    8.226849 1.339647e-16    1.334288e-13
+    ## simvar48    7.678817 1.034552e-14    1.029379e-11
+    ## simvar61    7.661820 1.178561e-14    1.171490e-11
+    ## simvar12    7.621981 1.597942e-14    1.586757e-11
+    ## simvar91    7.615994 1.672525e-14    1.659145e-11
+    ## simvar57    7.369054 1.066236e-13    1.056640e-10
 
 ``` r
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf) # adds a column for merge
@@ -113,22 +113,22 @@ k <- floor(num.samp/6)  # k=m/6 should be similar to MultiSURF
 i <- i+1  # if you want to use k for loop
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-t_sorted_relieff[[i]] <- results.list$`STIR-t`[, -3]
+t_sorted_relieff[[i]] <- results.list$STIR_T[, -3]
 colnames(t_sorted_relieff[[i]]) <- paste(c("t.stat", "t.pval", "t.pval.adj"), k, sep=".")
 (t_sorted_relieff[[i]][1:10,])
 ```
 
     ##          t.stat.16    t.pval.16 t.pval.adj.16
-    ## simvar1  11.977493 1.136481e-32  1.136481e-29
-    ## simvar63 11.178031 8.746913e-29  8.738166e-26
-    ## simvar55 10.371823 4.102019e-25  4.093815e-22
-    ## simvar56 10.223259 1.828220e-24  1.822735e-21
-    ## simvar34 10.150724 3.765207e-24  3.750146e-21
-    ## simvar14 10.149205 3.822400e-24  3.803288e-21
-    ## simvar20 10.016505 1.415628e-23  1.407134e-20
-    ## simvar85  9.801441 1.142475e-22  1.134478e-19
-    ## simvar32  9.724861 2.379014e-22  2.359982e-19
-    ## simvar5   9.601221 7.688314e-22  7.619119e-19
+    ## simvar53 10.436254 2.132324e-25  2.132324e-22
+    ## simvar19  8.747637 1.729603e-18  1.727874e-15
+    ## simvar69  8.464474 1.931650e-17  1.927787e-14
+    ## simvar49  7.929971 1.501494e-15  1.496989e-12
+    ## simvar10  7.895881 1.964286e-15  1.956429e-12
+    ## simvar61  7.738830 6.678804e-15  6.645410e-12
+    ## simvar91  7.629877 1.540153e-14  1.530912e-11
+    ## simvar57  7.573471 2.363406e-14  2.346862e-11
+    ## simvar12  7.543726 2.958625e-14  2.934956e-11
+    ## simvar1   7.515995 3.645166e-14  3.612360e-11
 
 ``` r
 t_sorted_relieff[[i]]$attribute <- rownames(t_sorted_relieff[[i]])
