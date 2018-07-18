@@ -1,16 +1,4 @@
-# package creation notes
-# 
-#library(devtools)
-#install.packages("roxygen2")
-#library(roxygen2)
-#setwd()
-#create("stir")
-#document() # creates roxygen documentation
-#install("stir")  # local
-#devtools::use_vignette("STIRvignette")  # first time you create a vignette
-# commit and push to github
-#install_github("insilico/stir") # github
-#library(stir)
+# STIR: STatistical Inference Relief 
 
 #=========================================================================#
 #' check.packages
@@ -504,3 +492,30 @@ convert.pec.sim.to.inbix <- function(pEC.inputFile,inbix.file.prefix){
   write.table(dataTable, datasimInbixNumFile, quote=F, sep="\t", 
               col.names=T, row.names=F)
 }
+
+
+#=========================================================================#
+# package creation notes
+#=========================================================================#
+#library(devtools)
+#library(roxygen2)
+#setwd()  # where you want your project
+#create("stir") # create a project with this name, only need to do this once
+
+## run this to create your roxygen documentation directories
+## rerun it every time you make a major change to documentation of functions
+##document()
+
+## this allows you to install your package locally without github
+##install("stir")  # local
+
+## do this the first time you create a vignette
+##devtools::use_vignette("STIRvignette") 
+
+## commit and push to github from RStudio
+## RStudio Menu: Tools -> Version Control -> Commit
+## Check box files, comment, commit, and push
+
+# Now you can install from github
+#install_github("insilico/stir") # github
+#library(stir)
