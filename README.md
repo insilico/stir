@@ -1,7 +1,7 @@
 
 # STIR (STatistical Inference Relief)
 
-Under Review: [BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/06/30/359224)
+Under Review: [BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/08/14/359224)
 
 [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
 
