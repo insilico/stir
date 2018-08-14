@@ -39,7 +39,7 @@ Trang T. Le, et al. “Identification and replication of RNA-Seq gene network mo
 ```{r load data, echo=T}
 class.lab <- "Diag"  # diagnosis, MDD/HC
 writeResults <- F
-load("mdd.RNASeq.0.8.filtered.corrected.Rdata")
+data(mdd.RNAseq)
 
 # ls()
 # "covs.short"   157 x 39 covariates
@@ -49,9 +49,9 @@ load("mdd.RNASeq.0.8.filtered.corrected.Rdata")
 # "rnaSeq"       157 x 5912 expression levels
 
 # 39 covariates, but we focus on MDD/HC status 
-pheno.df <- covs.short[, "Diag", drop = F]  # Diagnosis dataframe column, MDD/HC
+pheno.df <- mdd.RNAseq$covs.short[, "Diag", drop = F]  # Diagnosis dataframe column, MDD/HC
 # create gene expression data set
-gene.exp.dat <- merge(rnaSeq, pheno.df, by = "row.names", sort = F)
+gene.exp.dat <- merge(mdd.RNAseq$rnaSeq, pheno.df, by = "row.names", sort = F)
 rownames(gene.exp.dat) <- gene.exp.dat$Row.names
 dat <- gene.exp.dat[, -1] # remove columne of subject ids
 
@@ -110,7 +110,7 @@ i <- 0
 RF.method = "relieff"
 # k=(m-1)/2 should be similar to a t-test
 # there is a slight imblance, so subtract 1 from smaller class size to get kmax
-k <- min(c(sum(phenos=="MDD"), sum(phenos=="HC")))-1  # 77
+k <- min(c(sum(mdd.RNAseq$phenos=="MDD"), sum(mdd.RNAseq$phenos=="HC")))-1  # 77
 neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
 results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
 t_sorted_relieff_kmax <- results.list$STIR_T[, -3]

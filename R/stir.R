@@ -519,3 +519,8 @@ convert.pec.sim.to.inbix <- function(pEC.inputFile,inbix.file.prefix){
 # Now you can install from github
 #install_github("insilico/stir") # github
 #library(stir)
+
+## adding data
+#mdd.RNAseq = list(covs.short=covs.short,rnaSeq=rnaSeq,my_subjs=my_subjs,num.genes=num.genes,phenos=phenos)
+# do this on the main package directory. it will create an rda in the data/ directory
+#devtools::use_data(mdd.RNAseq)
