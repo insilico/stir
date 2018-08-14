@@ -1,5 +1,5 @@
 ---
-title: "STIR (STatistical Inference Relief) Example"
+title: "STIR (STatistical Inference Relief) Example: Simulated Data"
 author: "Brett McKinney and Trang Le"
 date: '`r Sys.Date()`'
 output: rmarkdown::html_vignette

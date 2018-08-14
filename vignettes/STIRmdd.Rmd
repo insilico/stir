@@ -2,12 +2,11 @@
 title: "STIR (STatistical Inference Relief) Example: RNA-Seq study of Major Depressive Disorder"
 author: "Brett McKinney and Trang Le"
 date: '`r Sys.Date()`'
-output:
-  github_document:
-  keep_md: yes
-knitr:
-  clean: no
-run_pandoc: no
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ## Install STIR and privateEC: 
