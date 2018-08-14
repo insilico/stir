@@ -41,7 +41,7 @@ Trang T. Le, et al. “Identification and replication of RNA-Seq gene network mo
 ```{r load data, echo=T}
 class.lab <- "Diag"  # diagnosis, MDD/HC
 writeResults <- F
-data("mdd.RNASeq.0.8.filtered.corrected.Rdata")
+load("mdd.RNASeq.0.8.filtered.corrected.Rdata")
 
 # ls()
 # "covs.short"   157 x 39 covariates
