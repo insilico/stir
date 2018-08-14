@@ -1,4 +1,4 @@
-# stirdata.R - bam - 8/13/18
+# data.R - bam - 8/13/18
 
 #' RNA-Seq from the paper referenced below.
 #'
@@ -11,4 +11,4 @@
 #' Trang T. Le, et al. “Identification and replication of RNA-Seq gene network modules associated with depression severity,” Translational Psychiatry. 2018.
 #' @format
 #' Data frame with 157 mdd and hc subjects, 5912 genes.
-"mdd.RNASeq.0.8.filtered.corrected"
+NULL
