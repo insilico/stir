@@ -1,0 +1,278 @@
+---
+title: "STIR (STatistical Inference Relief) Example: RNA-Seq study of Major Depressive Disorder"
+author: "Brett McKinney and Trang Le"
+date: '`r Sys.Date()`'
+output:
+  github_document:
+  keep_md: yes
+knitr:
+  clean: no
+run_pandoc: no
+---
+
+## Install STIR and privateEC: 
+
+```{r results='hide', message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+rm(list = ls())
+
+if (!("devtools" %in% installed.packages()[,"Package"])){
+  install.packages("devtools", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+}
+library(devtools)
+
+if (!("privateEC" %in% installed.packages()[,"Package"])){
+  devtools::install_github("insilico/privateEC", build_vignettes = TRUE)
+}
+if (!("stir" %in% installed.packages()[,"Package"])){
+  devtools::install_github("insilico/stir", build_vignettes = TRUE)
+}
+library(privateEC)  # used to simulate data
+library(stir)
+
+# load other helper packages
+packages <- c("ggplot2", "CORElearn", "reshape2", "dplyr", "pROC", "plotROC", "ggrepel")
+check.packages(packages)  # helper function from STIR
+```
+
+## Load varaince filtered RNA-Seq data for major depressive disorder (MDD) and healthy controls (HC)
+Trang T. Le, et al. “Identification and replication of RNA-Seq gene network modules associated with depression severity,” Translational Psychiatry. 2018.
+
+```{r load data, echo=T}
+class.lab <- "Diag"  # diagnosis, MDD/HC
+writeResults <- F
+data("mdd.RNASeq.0.8.filtered.corrected.Rdata")
+
+# ls()
+# "covs.short"   157 x 39 covariates
+# "my_subjs"     list of 157 subject ids   
+# "num.genes"    5912  
+# "phenos"       factor with levels MDD and HC phenotypes     
+# "rnaSeq"       157 x 5912 expression levels
+
+# 39 covariates, but we focus on MDD/HC status 
+pheno.df <- covs.short[, "Diag", drop = F]  # Diagnosis dataframe column, MDD/HC
+# create gene expression data set
+gene.exp.dat <- merge(rnaSeq, pheno.df, by = "row.names", sort = F)
+rownames(gene.exp.dat) <- gene.exp.dat$Row.names
+dat <- gene.exp.dat[, -1] # remove columne of subject ids
+
+predictors.mat <- dat[, - which(colnames(dat) == class.lab)]
+dat[, class.lab] <- as.factor(dat[, class.lab]) 
+pheno.class <- dat[, class.lab]
+attr.names <- colnames(predictors.mat)
+num.samp <- nrow(dat)
+
+```
+
+### Run STIR-multiSURF:
+
+```{r STIR multisurf}
+RF.method = "multisurf"
+metric <- "manhattan"
+# let k=0 because multisurf does not use k
+system.time(neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method))
+system.time(results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method))
+t_sorted_multisurf <- results.list$STIR_T[, -3]  # remove cohen-d
+colnames(t_sorted_multisurf) <- paste(c("t.stat", "t.pval", "t.pval.adj"), "stir", sep=".")
+(t_sorted_multisurf[1:10,])
+t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf) # adds a column for merge
+```
+
+### Optional write genes with t.pval.adj.stir < 0.05
+```{r}
+t_sorted_multisurf_short <- t_sorted_multisurf[t_sorted_multisurf$t.pval.adj.stir < 0.05,]
+if (writeResults) write.csv(t_sorted_multisurf_short, file = "stirGenes.csv")
+```
+
+### Run STIR-ReliefF constant $k=\lfloor(m-1)/6\rfloor$:
+ReliefF with $k=\lfloor(m-1)/6\rfloor$ (where m is the number of samples) is similar to multiSURF:
+
+```{r}
+t_sorted_relieff <- list()
+i <- 0
+RF.method = "relieff"
+k <- floor(num.samp/6)  # k=m/6 should be similar to MultiSURF
+i <- i+1  # if you want to use k for loop
+neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
+results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+t_sorted_relieff[[i]] <- results.list$STIR_T[, -3]
+colnames(t_sorted_relieff[[i]]) <- paste(c("t.stat", "t.pval", "t.pval.adj"), k, sep=".")
+(t_sorted_relieff[[i]][1:10,])
+t_sorted_relieff[[i]]$attribute <- rownames(t_sorted_relieff[[i]])
+t_sorted_relieff[[i+1]] <- t_sorted_multisurf
+```
+
+### Run STIR-ReliefF constant $k=\lfloor(m-1)/2\rfloor$:
+ReliefF with $k=\lfloor(m-1)/2\rfloor$ (where $m$ is the number of samples) is the maximum $k$, which is more myopic like a t-test:
+
+```{r myopic STIR}
+t_sorted_relieff_kmax <- list()
+i <- 0
+RF.method = "relieff"
+# k=(m-1)/2 should be similar to a t-test
+# there is a slight imblance, so subtract 1 from smaller class size to get kmax
+k <- min(c(sum(phenos=="MDD"),sum(phenos=="HC")))-1  # 77
+neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = k, method = RF.method)
+results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+t_sorted_relieff_kmax <- results.list$STIR_T[, -3]
+colnames(t_sorted_relieff_kmax) <- paste(c("t.stir", "p.stir", "p.adj"), k, sep=".")
+(t_sorted_relieff_kmax[1:10,])
+t_sorted_relieff_kmax$attribute <- rownames(t_sorted_relieff_kmax)
+```
+
+### Standard t-test:
+
+```{r standard t-test}
+regular.ttest.results <- sapply(1:ncol(predictors.mat), regular.ttest.fn, dat = dat)
+names(regular.ttest.results) <- colnames(predictors.mat)
+tsort <- sort(regular.ttest.results, index.return=T)
+regular.ttest.sorted <- tsort$x
+regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
+top8.ttest <- data.frame(genes=names(regular.ttest.sorted)[1:8], t.padj=regular.t.padj[1:8,1])
+(top8.ttest)
+```
+
+### Intersection:
+```{r intersect}
+stir_msurf.sig <- as.character(t_sorted_multisurf[t_sorted_multisurf$t.pval.adj.stir<0.05, "attribute"])
+
+
+
+```
+
+
+
+```{r}
+t.stir <- merge(regular.t.padj, t_sorted_multisurf, by = "row.names")
+t.stir$nlogp.t <- -log10(t.stir$regT.padj)
+t.stir$nlogp.stir <- -log10(t.stir$t.pval.adj.stir)
+t.stir$sig.genes <- NA
+t.stir[t.stir$t.pval.adj.stir < 0.05, "sig.genes"] <- t.stir[t.stir$t.pval.adj.stir < 0.05, "attribute"] 
+t.stir$t.sig <- as.factor((t.stir$regT.padj <0.05) + (t.stir$t.pval.adj.stir <0.05))
+
+my.cols <- c("#009E73", "#CC79A7")
+```
+
+```{r}
+library(ggrepel)
+pboth <- ggplot(t.stir, aes(x = nlogp.t, y = nlogp.stir)) + geom_point(alpha = 0.7, shape = 21, size = 2.5, aes(fill = t.sig)) + theme_bw() +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = 0.8, color = my.cols[2]) + 
+  geom_vline(xintercept = -log10(0.05), linetype = 2, alpha = 0.8, color = my.cols[1]) + 
+  geom_abline(slope = 1, intercept = 0, alpha = 0.5, linetype = 3) +
+  annotate("text", 4, -log10(0.05) + 0.1, label = "STIR 0.05 FDR", size = 3, color = my.cols[2]) +
+  annotate("text", -log10(0.05) - 0.1, 6.5, label = "t-test 0.05 FDR", size = 3, color = my.cols[1], angle = 90) +
+  scale_x_continuous(limits = c(0, 4.5)) +
+  # labs(x = bquote(-log[10]~ '( p'[adj.t-test]~')' ),
+  #      y = bquote(-log[10]~ '( p'[adj.STIR-m]~')' )) +
+  labs(x = bquote('t-test ('~-log[10]~'p'[adj]~')'),
+       y = bquote('STIR-multiSURF ('~-log[10]~'p'[adj]~')')) +
+
+  geom_text(aes(label = sig.genes, size = t.sig), check_overlap = TRUE, 
+            hjust=-0.12, vjust=1.5, fontface = "italic"
+            # , position=position_jitter(width=0,height=0.2)
+            ) +   guides(fill = F) +
+  scale_fill_manual(values = c("white", my.cols[2], "grey30")) +
+  guides(size=FALSE) + coord_fixed(ratio = 1) +
+  theme(axis.title = element_text(size = 8),
+        axis.text = element_text(size = 7)) +
+  scale_size_discrete(range = c(2,2))
+pboth
+
+if (writeResults){
+  pdf("tstir.pdf", width = 4, height = 6)
+  pboth
+  dev.off()
+}
+
+top32t <- rownames(regular.t.padj)[1:32]
+if (writeResults){
+  write.csv(intersect(top32t, stir_msurf.sig), file = "tAndSTIR.csv")
+  write.csv(setdiff(top32t, stir_msurf.sig), file = "tMinusSTIR.csv")
+  write.csv(setdiff(stir_msurf.sig, top32t), file = "STIRMinust.csv")
+}
+```
+
+### p-adj < .05 STIR-multiSURF:
+```{r}
+write.table(stir_msurf.sig,col.names = F,quote=F)
+```
+
+
+### Aggregate results of STIR with ReleifF and STIR with MultiSURF and regular t-test:
+
+```{r}
+final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
+#final.mat <- reshape::merge_all(t_sorted_relieff)
+
+if (writeResults){
+  write.csv(final.mat,file="final.mat.csv")
+}
+```
+
+```{r echo=F}
+# # Compare myopic STIR with standard t-test (only 8 have p.adj < .05).
+# # All 8 fdr t-test genes are contained in the top10 myopic STIR genes:
+# ttest8 <- as.character(top8.ttest$genes)
+# myopic10 <- as.character(t_sorted_relieff_kmax$attribute[1:10])
+# (intersect(myopic10, ttest8))
+# 
+# # Compare top 10 STIR-k=m/6 with myopic STIR.
+# # 5/10 genes overlap: 
+# m6_top10 <- as.character(t_sorted_relieff[[1]]$attribute[1:10])
+# (intersect(m6_top10, myopic10))
+# # This suggests that the other top-5 STIR-k=m/6 genes may involve interactions:
+# (setdiff(m6_top10, myopic10))
+# 
+# # Compare STIR-k=m/6 with STIR multiSURF.
+# # 8/10 genes overlap:
+# cat("\n8/10 genes overlap between STIR:(k=m/6) and STIR:multiSURF: \n")
+# stir_msurf10 <- as.character(t_sorted_multisurf$attribute[1:10])
+# 
+# (intersect(m6_top10, stir_msurf10))
+# 
+# cat("\nUnique to STIR-k=m/6 (not in STIR multiSURF):\n")
+# (setdiff(m6_top10, stir_msurf10))
+# 
+# # Unique to STIR multiSURF (not in STIR-k=m/6):
+# cat("\nUnique to STIR multiSURF (not in STIR-k=m/6):\n")
+# (setdiff(stir_msurf10, m6_top10))
+```
+
+```{r echo=F}
+## Plot STIR significance of attributes:
+rownames(final.mat) <- final.mat$attribute
+pval.df <- final.mat[attr.names, ]
+pval.df.sorted <- pval.df[order(pval.df$t.pval.stir),]
+
+pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj.stir", "t.pval.adj.26")], id.vars = 1)
+# pval.melt <- melt(pval.df[, c("attribute", "t.pval.adj.stir")], id.vars = 1)
+levels(pval.melt$variable) <- c("multiSURF", "ReliefF, k=26")
+pval.melt$value <- -log(pval.melt$value, 10)
+pval.melt$value[pval.melt$value >10] <- 10
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+t4 <- ggplot(pval.melt, aes(x = attribute, y = value, group = variable, color = variable)) + 
+  ylim(c(-0.2,11))+
+  geom_point(alpha = 0.7, position = position_jitter(w = 0, h = 0.2)) + 
+  # geom_vline(xintercept = 100, linetype = 2, color = "grey") + 
+  labs(y = "-Log10(p-value)", x = "Features (in data order)", title = "Significance of attributes") + 
+  theme_bw() +
+  theme(legend.position = c(0.8, 0.8), legend.title = element_blank(), axis.text.x=element_blank()) + 
+  scale_color_manual(values = cbPalette[2:3]) +
+  geom_hline(yintercept = -log(0.05, 10), linetype = 4, color = "grey") 
+
+#Plot of -log10(p-values) of attributes. Attributes are in their original order from the data, but the significant attributes tend to be on the left because the simulated functional attributes were targeted to be first. Thus, attributes to the left of the vertical dashed line are targeted as *functional* or *predictive* in the simulation. However, for interactions, some attributes on the right may be functional due to network co-expression.
+#(Note: p-values less than $e^{-10}$ are plotted as $e^{-10}$ for scaling. Points are slightly jittered vertically to show results of both methods.)
+
+# show(t4)
+```
+
+```{r echo=F}
+# Scatter plot of k=m/6 and multisurf p-vals
+t5 <- ggplot(pval.df, aes(x = t.pval.adj.26, y = t.pval.adj.stir)) + geom_point() + 
+  labs(y = "STIR k=(m-1)/6" , x = "STIR MultiSurf", title = "Adjusted -Log10(p-value)") + 
+  theme_bw() +
+  theme(legend.position = c(0.8, 0.8), legend.title = element_blank(), axis.text.x=element_blank()) 
+# show(t5)
+```

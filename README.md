@@ -4,7 +4,7 @@ Under Review: [BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/06/3
 
 [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
 
-Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR/blob/master/STIRexample.md).
+Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR/blob/master/inst/example/STIRexample.md).
 
 To install:
 
@@ -14,5 +14,7 @@ To install:
 
     >library(stir)
     
-    >vignette("STIRvignette")
+    >vignette("STIRsimulated")
+    
+    >vignette("STIRmdd")
 
