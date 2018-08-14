@@ -79,6 +79,7 @@ colnames(t_sorted_multisurf) <- paste(c("t.stat", "t.pval", "t.pval.adj"), "stir
 t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf) # adds a column for merge
 ```
 
+
 ### Optional write genes with t.pval.adj.stir < 0.05
 ```{r}
 t_sorted_multisurf_short <- t_sorted_multisurf[t_sorted_multisurf$t.pval.adj.stir < 0.05,]
