@@ -17,4 +17,6 @@ To install:
     >vignette("STIRsimulated")
     
     >vignette("STIRmdd")
+    
+    >data(package="stir")
 
