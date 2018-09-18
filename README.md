@@ -13,7 +13,7 @@ Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR
 
     >library(devtools)
     
-    >install_github("insilico/stir", build_vignettes = TRUE)
+    >install_github("insilico/stir")  # build_vignettes = TRUE can be slow
 
     >library(stir)
     
