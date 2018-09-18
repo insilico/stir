@@ -1,7 +1,7 @@
 
 # STIR (STatistical Inference Relief)
 
-Trang T. Le, Ryan J. Urbanowicz, Jason H. Moore, B. A McKinney. “STatistical Inference Relief (STIR) feature selection,” Bioinformatics. 2018. Accepted.
+Trang T. Le, Ryan J. Urbanowicz, Jason H. Moore, B. A McKinney. “STatistical Inference Relief (STIR) feature selection,” Bioinformatics. 2018. doi: 10.1093/bioinformatics/bty788. In Press.
 
 [BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/08/14/359224)
 
