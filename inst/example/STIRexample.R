@@ -7,7 +7,7 @@ if (!("devtools" %in% installed.packages()[,"Package"])){
 library(devtools)
 
 if (!("privateEC" %in% installed.packages()[,"Package"])){
-  devtools::install_github("insilico/privateEC", build_vignettes = TRUE)
+  devtools::install_github("insilico/privateEC") #, build_vignettes = TRUE)
 }
 if (!("stir" %in% installed.packages()[,"Package"])){
   devtools::install_github("insilico/stir", build_vignettes = TRUE)
