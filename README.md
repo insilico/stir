@@ -17,6 +17,8 @@ Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR
 
     >library(stir)
     
+    [BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/08/14/359224)
+    
     [Simulated Data Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRsimulated.Rmd)   # >vignette("STIRsimulated")
     
     [RNA-Seq Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRmdd.Rmd) # >vignette("STIRmdd")
