@@ -26,7 +26,7 @@ Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR
     
  ### Examples
 
-[Simulated Data Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRsimulated.Rmd) 
+[Simulated Data Example with privateEC Simulation](https://github.com/insilico/STIR/tree/master/inst/example) 
 
 [RNA-Seq Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRmdd.Rmd) 
 
