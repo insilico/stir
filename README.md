@@ -13,13 +13,13 @@ Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR
 
     >library(devtools)
     
-    >install_github("insilico/stir")  # build_vignettes = TRUE can be slow
+    >install_github("insilico/stir")  # you can use build_vignettes = TRUE but slows down install
 
     >library(stir)
     
-    >vignette("STIRsimulated")
+    [Simulated Data Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRsimulated.Rmd)   # >vignette("STIRsimulated")
     
-    >vignette("STIRmdd")
+    [RNA-Seq Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRmdd.Rmd) # >vignette("STIRmdd")
     
     >data(package="stir")
 
