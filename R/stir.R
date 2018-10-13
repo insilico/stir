@@ -134,7 +134,6 @@ get.distance <- function(attr.mat, metric){
   distance.mat
 }
 
-
 #=========================================================================#
 #' regular.ttest
 #'
