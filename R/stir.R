@@ -121,7 +121,10 @@ get.distance <- function(attr.mat, metric){
   # metric options: "euclidean", "maximum", "manhattan", "hamming"
   if (metric == "hamming"){
     distance.mat <- hamming.binary(attr.mat)
-  } else {
+  } else if (metric == "allele-sharing-manhattan"){
+    attr.mat.scale <- attr.mat / 2
+    distance.mat <- as.matrix(dist(attr.mat.scale, method = "manhattan"))
+    } else {  # value of metric, euclidean, manhattan or maximum
     maxminVec <- attr.range(attr.mat)
     minVec <- apply(attr.mat, 2, function(x) {min(x)})
     attr.mat.centered <- t(attr.mat) - minVec
@@ -286,7 +289,7 @@ make.factor <- function(x) rep(1/x, x)
 #'
 #' @export
 stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat), 
-                   k, metric, transform = "None"){
+                   k, metric="manhattan", transform = "None"){
   # simple implementation of the relieff algorithm
   # returns a named vector of attribute scores
   
