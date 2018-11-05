@@ -44,8 +44,10 @@ We demonstrate the statistical power and control of type I error of the STIR fam
 
 #### Websites
 [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
+
 [https://github.com/insilico](https://github.com/insilico)
 
 #### Contact
 [brett.mckinney@gmail.com](brett.mckinney@gmail.com)
+
 [ttle@pennmedicine.upenn.edu](ttle@pennmedicine.upenn.edu)
