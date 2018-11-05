@@ -1,9 +1,7 @@
 
 # STIR (STatistical Inference Relief)
 
-Trang T. Le, Ryan J. Urbanowicz, Jason H. Moore, B. A McKinney. “STatistical Inference Relief (STIR) feature selection,” Bioinformatics. 2018. [https://doi.org/10.1093/bioinformatics/bty788](https://doi.org/10.1093/bioinformatics/bty788) (In Press.)
-
-[BioRxiv Preprint](https://www.biorxiv.org/content/early/2018/08/14/359224)
+Trang T. Le, Ryan J. Urbanowicz, Jason H. Moore, B. A McKinney. “STatistical Inference Relief (STIR) feature selection,” Bioinformatics. 18 September 2018. [https://doi.org/10.1093/bioinformatics/bty788](https://doi.org/10.1093/bioinformatics/bty788)
 
 [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
 
@@ -26,7 +24,7 @@ Example STIR usage and output: [STIRexample.md](https://github.com/insilico/STIR
     
  ### Examples
 
-[Simulated Data Example with privateEC Simulation](https://github.com/insilico/STIR/tree/master/inst/example) 
+[Simulated Data Example with privateEC Simulation](https://github.com/insilico/STIR/blob/master/inst/example/STIRexample.md) 
 
 [RNA-Seq Example](https://github.com/insilico/STIR/blob/master/vignettes/STIRmdd.Rmd) 
 
@@ -44,8 +42,9 @@ We reconceptualize the Relief-based feature selection algorithm to create a new 
 
 We demonstrate the statistical power and control of type I error of the STIR family of feature selection methods on a panel of simulated data that exhibits properties reflected in real gene expression data, including main effects and network interaction effects. We compare the performance of STIR when the adaptive radius method is used as the nearest neighbor constructor with STIR when the fixed-$k$ nearest neighbor constructor is used. We apply STIR to real RNA-Seq data from a study of major depressive disorder and discuss STIR's straightforward extension to genome-wide association studies.
 
-#### Availability
-Code and data available at [http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
+#### Websites
+[http://insilico.utulsa.edu/software/STIR](http://insilico.utulsa.edu/software/STIR)
+[https://github.com/insilico](https://github.com/insilico)
 
 #### Contact
 [brett.mckinney@gmail.com](brett.mckinney@gmail.com)
