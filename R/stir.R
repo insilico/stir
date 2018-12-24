@@ -217,7 +217,7 @@ nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", metho
       Ri.radius <- colSums(dist.mat)/(num.samp - 1) - sd.frac*sd.vec # use adaptive radius
     }
     
-    # put each Ri's nbd in a list then rbind them at the end with do.call(cbind, List)
+    # put each Ri's nbd in a list then rbind them at the end with do.call(rbind, List)
     # initialize list:
     Ri.nearestPairs.list <- vector("list",num.samp)
     for (Ri in seq(1:num.samp)){ # for each sample Ri
@@ -229,9 +229,9 @@ nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", metho
         # cbind automatically repeats Ri
         Ri.nearestPairs.list[[Ri]] <- cbind(Ri, Ri.nearest.idx) 
       } 
-    } # end for, now stack lists into matrix, do.call cbind
+    } # end for, now stack lists into matrix, do.call rbind
     
-    Ri_NN.idxmat <- do.call(cbind, Ri.nearestPairs.list)
+    Ri_NN.idxmat <- do.call(rbind, Ri.nearestPairs.list)
     colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
   }
   # matrix of Ri's (first column) and their NN's (second column)
