@@ -235,7 +235,7 @@ nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", metho
     colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
   }
   # matrix of Ri's (first column) and their NN's (second column)
-  return(Ri_NN.mat)
+  return(Ri_NN.idxmat)
 }
 
 #=========================================================================#
