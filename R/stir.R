@@ -154,6 +154,99 @@ regular.ttest.fn <- function(attr.idx, dat, class.idx = ncol(dat)){
          predictors.mat[dat[, class.idx] == classes[2], attr.idx])$p.value
 }
 
+#=========================================================================#
+#' nearest.neighbors
+#'
+#' Find nearest neighbors of each instance using relief.method
+#' Used for regression stir (re.stir) (no hits or misses) used here.
+#'
+#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param pheno.class length m vector of binary class status (usually -1/1)  \code{find.neighbors}
+#' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
+#' @param method neighborhood method [\code{"multisurf"} or \code{"surf"} (k=0) or \code{"relieff"} (specify k)]
+#' @param k number of constant nearest hits/misses for \code{"relieff"}
+#' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
+#' The multiSURF default is sd.frac=0.5: mean - sd/2 
+#' @return return variable (hitmiss.list) is a two-element: hitmiss.list[[1]] (hits) and hitmiss.list[[2]] (misses). 
+#' Each list has two columns: $Ri_idx is the first column (instances) in both lists. The second column is 
+#' $hit_idx (nearest hits for the first column instance) for list [[1]] and $miss_idx (nearest misses) for list [[2]].
+#'
+#' @examples
+#' #See vignette("STIRvignette")
+#' RF.method = "multisurf"
+#' metric <- "manhattan"
+#' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
+#' results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
+#' t_sorted_multisurf <- results.list$STIR_T
+#' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+#'
+#' @export
+nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
+  # create a matrix with num.samp rows, three columns
+  # first column is sample Ri, second is Ri's hit, third is Ri's miss
+  
+  dist.mat <- get.distance(attr.mat, metric = metric)
+  num.samp <- nrow(attr.mat)
+  num.pair <- num.samp * (num.samp-1) / 2 # number of paired distances
+  radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
+  
+  if (method == "relieff"){  
+    neighbor.idx <- matrix(0, nrow = num.samp * k, ncol = 3)
+    
+    for (Ri in seq(1:num.samp)){ # for each sample Ri
+      Ri.distances <- dist.mat[Ri,] # all distances to sample Ri
+      Ri.nearest <- order(Ri.distances, decreasing = F) # closest to furthest
+      Ri.nearest.mat <- cbind(Ri.nearest, pheno.class[Ri.nearest])
+      Ri.nearest.hits <- Ri.nearest.mat[Ri.nearest.mat[,2] == Ri.nearest.mat[1,2],]
+      Ri.nearest.misses <- Ri.nearest.mat[Ri.nearest.mat[,2] != Ri.nearest.mat[1,2],]
+      Ri.kn.hits <- Ri.nearest.hits[2:(k+1), 1] # skip Ri self
+      Ri.kn.misses <- Ri.nearest.misses[1:k, 1]
+      
+      # stack matrix of neighbor indices
+      row.start <- (Ri-1)*k + 1
+      row.end <- row.start + k - 1
+      neighbor.idx[row.start:row.end, 1] <- rep(Ri, k)
+      neighbor.idx[row.start:row.end, 2] <- Ri.kn.hits
+      neighbor.idx[row.start:row.end, 3] <- Ri.kn.misses      
+    }
+    colnames(neighbor.idx) <- c("Ri_idx","hit_idx","miss_idx")
+    hit.idx <- neighbor.idx[, c(1, 2)]
+    miss.idx <- neighbor.idx[, c(1, 3)]
+    
+  } else {
+    #if (method == "surf") Ri.radius <- rep(radius.surf, num.samp) # use constance radius
+    if (method == "surf"){
+      sd.const <- sd(dist.mat[upper.tri(dist.mat)])  # bam: constant standard deviation
+      Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) # use constant radius and sd
+    }
+    if (method == "multisurf"){
+      if (is.null(sd.vec)) sd.vec <- sapply(1:num.samp, function(x) sd(dist.mat[-x, x]))
+      Ri.radius <- colSums(dist.mat)/(num.samp - 1) - sd.frac*sd.vec # use adaptive radius
+    }
+    
+    hit.idx <- data.frame()
+    miss.idx <- data.frame()
+    
+    for (Ri in seq(1:num.samp)){ # for each sample Ri
+      Ri.distances <- sort(dist.mat[Ri,], decreasing = F)
+      Ri.nearest <- Ri.distances[Ri.distances < Ri.radius[Ri]] # within the threshold
+      # Ri.nearest.idx <- as.numeric(names(Ri.nearest))
+      Ri.nearest.idx <- match(names(Ri.nearest), row.names(attr.mat))
+      Ri.nearest.mat <- data.frame(Ri.nearest.idx, pheno.class[Ri.nearest.idx])
+      Ri.nearest.hits <- Ri.nearest.mat[Ri.nearest.mat[,2] == Ri.nearest.mat[1,2],]
+      Ri.nearest.misses <- Ri.nearest.mat[Ri.nearest.mat[,2] != Ri.nearest.mat[1,2],]
+      if ((nrow(Ri.nearest.hits) > 1) & (nrow(Ri.nearest.misses) > 1)){
+        hit.idx <- rbind(hit.idx, cbind(Ri, Ri.nearest.hits[-1, 1])) # exclude itself
+        miss.idx <- rbind(miss.idx, cbind(Ri, Ri.nearest.misses[, 1]))
+      } 
+    }
+    
+    colnames(hit.idx) <- c("Ri_idx", "hit_idx")
+    colnames(miss.idx) <- c("Ri_idx", "miss_idx")
+  }
+  hitmiss.list <- list(hit.idx, miss.idx)
+  return(hitmiss.list)
+}
 
 #=========================================================================#
 #' find.neighbors
