@@ -6,15 +6,11 @@
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
 #' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
-#' @param method neighborhood method [\code{"multisurf"} or \code{"surf"} (k=0) or \code{"relieff"} (specify k)]
+#' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]
 #' @param k number of constant nearest hits/misses for \code{"relieff"}
 #' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
 #' The multiSURF default is sd.frac=0.5: mean - sd/2 
-#' @return return variable (hitmiss.list) is a two-element: hitmiss.list[[1]] (hits) and hitmiss.list[[2]] (misses). 
-#' Each list has two columns: $Ri_idx is the first column (instances) in both lists. The second column is 
-#' $hit_idx (nearest hits for the first column instance) for list [[1]] and $miss_idx (nearest misses) for list [[2]].
-#'
-#' test
+#' @return  Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 #'
 #' @examples
 #' #See vignette("STIRvignette")
@@ -26,16 +22,16 @@
 #' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
 #'
 #' @export
-nearest.neighbors <- function(attr.mat, metric = "manhattan", method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
-  # create a matrix with num.samp rows, three columns
-  # first column is sample Ri, second is Ri's hit, third is Ri's miss
+nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
+  # create a matrix with num.samp rows, two columns
+  # first column is sample Ri, second is Ri's nearest neighbors
   
   dist.mat <- get.distance(attr.mat, metric = metric)
   num.samp <- nrow(attr.mat)
   num.pair <- num.samp * (num.samp-1) / 2 # number of paired distances
   radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
   
-  if (method == "relieff"){  
+  if (nbd.method == "relieff"){  
     Ri_NN.idxmat <- matrix(0, nrow = num.samp * k, ncol = 2)
     colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
     for (Ri in seq(1:num.samp)){ # for each sample Ri
@@ -50,12 +46,12 @@ nearest.neighbors <- function(attr.mat, metric = "manhattan", method="multisurf"
       Ri_NN.idxmat[row.start:row.end, 2] <- Ri.nearest.idx  # col of knn's of Ri's
     }
   } else {
-    if (method == "surf"){
+    if (nbd.method == "surf"){
       sd.const <- sd(dist.mat[upper.tri(dist.mat)])  
       # bam: orignal surf does not subtract sd-frac but should for fair multisurf comparison
       Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) 
     }
-    if (method == "multisurf"){
+    if (nbd.method == "multisurf"){
       if (is.null(sd.vec)) sd.vec <- sapply(1:num.samp, function(x) sd(dist.mat[-x, x]))
       Ri.radius <- colSums(dist.mat)/(num.samp - 1) - sd.frac*sd.vec # use adaptive radius
     }

@@ -125,7 +125,7 @@ get.distance <- function(attr.mat, metric){
   } else if (metric == "allele-sharing-manhattan"){
     attr.mat.scale <- attr.mat / 2
     distance.mat <- as.matrix(dist(attr.mat.scale, method = "manhattan"))
-    } {  # value of metric, euclidean, manhattan or maximum
+    } else {  # value of metric, euclidean, manhattan or maximum
     maxminVec <- attr.range(attr.mat)
     minVec <- apply(attr.mat, 2, function(x) {min(x)})
     attr.mat.centered <- t(attr.mat) - minVec
