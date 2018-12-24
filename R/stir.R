@@ -193,61 +193,49 @@ nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", metho
   radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
   
   if (method == "relieff"){  
-    neighbor.idx <- matrix(0, nrow = num.samp * k, ncol = 3)
-    
+    Ri_NN.idxmat <- matrix(0, nrow = num.samp * k, ncol = 2)
+    colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
     for (Ri in seq(1:num.samp)){ # for each sample Ri
       Ri.distances <- dist.mat[Ri,] # all distances to sample Ri
       Ri.nearest <- order(Ri.distances, decreasing = F) # closest to furthest
-      Ri.nearest.mat <- cbind(Ri.nearest, pheno.class[Ri.nearest])
-      Ri.nearest.hits <- Ri.nearest.mat[Ri.nearest.mat[,2] == Ri.nearest.mat[1,2],]
-      Ri.nearest.misses <- Ri.nearest.mat[Ri.nearest.mat[,2] != Ri.nearest.mat[1,2],]
-      Ri.kn.hits <- Ri.nearest.hits[2:(k+1), 1] # skip Ri self
-      Ri.kn.misses <- Ri.nearest.misses[1:k, 1]
-      
+      ## bam_add
+      Ri.nearest.idx <- Ri.nearest[2:(k+1),1] # skip Ri self
       # stack matrix of neighbor indices
       row.start <- (Ri-1)*k + 1
       row.end <- row.start + k - 1
-      neighbor.idx[row.start:row.end, 1] <- rep(Ri, k)
-      neighbor.idx[row.start:row.end, 2] <- Ri.kn.hits
-      neighbor.idx[row.start:row.end, 3] <- Ri.kn.misses      
+      Ri_NN.idxmat[row.start:row.end, 1] <- rep(Ri, k)     # col of Ri's
+      Ri_NN.idxmat[row.start:row.end, 2] <- Ri.nearest.idx  # col of knn's of Ri's
     }
-    colnames(neighbor.idx) <- c("Ri_idx","hit_idx","miss_idx")
-    hit.idx <- neighbor.idx[, c(1, 2)]
-    miss.idx <- neighbor.idx[, c(1, 3)]
-    
   } else {
-    #if (method == "surf") Ri.radius <- rep(radius.surf, num.samp) # use constance radius
     if (method == "surf"){
-      sd.const <- sd(dist.mat[upper.tri(dist.mat)])  # bam: constant standard deviation
-      Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) # use constant radius and sd
+      sd.const <- sd(dist.mat[upper.tri(dist.mat)])  
+      # bam: orignal surf does not subtract sd-frac but should for fair multisurf comparison
+      Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) 
     }
     if (method == "multisurf"){
       if (is.null(sd.vec)) sd.vec <- sapply(1:num.samp, function(x) sd(dist.mat[-x, x]))
       Ri.radius <- colSums(dist.mat)/(num.samp - 1) - sd.frac*sd.vec # use adaptive radius
     }
     
-    hit.idx <- data.frame()
-    miss.idx <- data.frame()
-    
+    # put each Ri's nbd in a list then rbind them at the end with do.call(cbind, List)
+    # initialize list:
+    Ri.nearestPairs.list <- vector("list",num.samp)
     for (Ri in seq(1:num.samp)){ # for each sample Ri
       Ri.distances <- sort(dist.mat[Ri,], decreasing = F)
       Ri.nearest <- Ri.distances[Ri.distances < Ri.radius[Ri]] # within the threshold
-      # Ri.nearest.idx <- as.numeric(names(Ri.nearest))
+      Ri.nearest <- Ri.nearest[-1] # skip Ri self
       Ri.nearest.idx <- match(names(Ri.nearest), row.names(attr.mat))
-      Ri.nearest.mat <- data.frame(Ri.nearest.idx, pheno.class[Ri.nearest.idx])
-      Ri.nearest.hits <- Ri.nearest.mat[Ri.nearest.mat[,2] == Ri.nearest.mat[1,2],]
-      Ri.nearest.misses <- Ri.nearest.mat[Ri.nearest.mat[,2] != Ri.nearest.mat[1,2],]
-      if ((nrow(Ri.nearest.hits) > 1) & (nrow(Ri.nearest.misses) > 1)){
-        hit.idx <- rbind(hit.idx, cbind(Ri, Ri.nearest.hits[-1, 1])) # exclude itself
-        miss.idx <- rbind(miss.idx, cbind(Ri, Ri.nearest.misses[, 1]))
+      if (length(Ri.nearest.idx) > 1){ # if neighborhood not empty
+        # cbind automatically repeats Ri
+        Ri.nearestPairs.list[[Ri]] <- cbind(Ri, Ri.nearest.idx) 
       } 
-    }
+    } # end for, now stack lists into matrix, do.call cbind
     
-    colnames(hit.idx) <- c("Ri_idx", "hit_idx")
-    colnames(miss.idx) <- c("Ri_idx", "miss_idx")
+    Ri_NN.idxmat <- do.call(cbind, Ri.nearestPairs.list)
+    colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
   }
-  hitmiss.list <- list(hit.idx, miss.idx)
-  return(hitmiss.list)
+  # matrix of Ri's (first column) and their NN's (second column)
+  return(Ri_NN.mat)
 }
 
 #=========================================================================#
