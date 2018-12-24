@@ -171,6 +171,8 @@ regular.ttest.fn <- function(attr.idx, dat, class.idx = ncol(dat)){
 #' Each list has two columns: $Ri_idx is the first column (instances) in both lists. The second column is 
 #' $hit_idx (nearest hits for the first column instance) for list [[1]] and $miss_idx (nearest misses) for list [[2]].
 #'
+#' test
+#'
 #' @examples
 #' #See vignette("STIRvignette")
 #' RF.method = "multisurf"
