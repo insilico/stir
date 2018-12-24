@@ -51,28 +51,27 @@ stirDistances <- function(attr.mat, metric="manhattan"){
 #' @param attr.mat m x p matrix of m instances and p attributes 
 #' @param metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)
 #' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]
-#' @param k number of constant nearest hits/misses for \code{"relieff"}
+#' @param k number of constant nearest hits/misses for \code{"relieff"}. 
+#' The default k is the expected SURF theoretical k and uses sd.frac (.5 by default) 
 #' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
 #' The multiSURF default is sd.frac=0.5: mean - sd/2 
 #' @return  Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 #'
 #' @examples
 #' #See vignette("STIRvignette")
-#' nbd.method = "multisurf"
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
+#' 
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
 #'
 #' @export
-nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k="surf-theoretical-k"){
+nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k=0){
   # create a matrix with num.samp rows, two columns
   # first column is sample Ri, second is Ri's nearest neighbors
   
   dist.mat <- stirDistances(attr.mat, metric = metric)
   num.samp <- nrow(attr.mat)
-  num.pair <- num.samp * (num.samp-1) / 2 # number of paired distances
-  radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
   
   if (nbd.method == "relieff"){  
-    if (k=="surf-theoretical-k"){
+    if (k==0){ # if no k specified or value 0
     # replace k with the theoretical expected value for SURF (close to multiSURF)
     erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
     k <- floor((num.samp-1)*(1-erf(sd.frac/sqrt(2)))/2)
@@ -92,6 +91,8 @@ nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisu
     }
   } else {
     if (nbd.method == "surf"){
+      num.pair <- num.samp * (num.samp-1) / 2 # number of paired distances
+      radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
       sd.const <- sd(dist.mat[upper.tri(dist.mat)])  
       # bam: orignal surf does not subtract sd-frac but should for fair multisurf comparison
       Ri.radius <- rep(radius.surf - sd.frac*sd.const, num.samp) 
