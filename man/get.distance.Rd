@@ -7,10 +7,9 @@
 get.distance(attr.mat, metric)
 }
 \arguments{
-\item{test}{test}
-}
-\value{
-test test
+\item{attr.mat}{m x p matrix of m instances and p attributes}
+
+\item{metric}{for distance matrix between instances (\code{"manhattan"}, \code{"euclidean"}, ).}
 }
 \description{
 Description
