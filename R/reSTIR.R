@@ -1,11 +1,53 @@
 #=========================================================================#
+#' stirDistances
+#'
+#' Description
+#'
+#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param metric for distance matrix between instances (default: \code{"manhattan"}, \code{"euclidean"}, 
+#' \code{"relief-scaled-manhattan"}, \code{"relief-scaled-euclidean"}, \code{"allele-sharing-manhattan"}).
+#' @examples
+#' Example
+#' @export
+stirDistances <- function(attr.mat, metric="manhattan"){
+  # Compute distance matrix between all samples (rows)
+  # reSTIR default is numeric manhattan ("manhattan"), max-min scaling is not needed for stir
+  if (metric == "hamming"){
+    distance.mat <- hamming.binary(attr.mat)
+  } else if (metric == "allele-sharing-manhattan"){
+    # allele-sharing-manhattan, AM for SNPs
+    attr.mat.scale <- attr.mat / 2
+    distance.mat <- as.matrix(dist(attr.mat.scale, method = "manhattan"))
+  } else if (metric == "relief-scaled-manhattan"){
+    # value of metric, euclidean, manhattan or maximum
+    maxminVec <- attr.range(attr.mat)
+    minVec <- apply(attr.mat, 2, function(x) {min(x)})
+    attr.mat.centered <- t(attr.mat) - minVec
+    attr.mat.scale <- t(attr.mat.centered / maxminVec)
+    distance.mat <- as.matrix(dist(attr.mat.scale, method = "manhattan"))
+  } else if (metric == "relief-scaled-euclidean"){
+    # value of metric, euclidean, manhattan or maximum
+    maxminVec <- attr.range(attr.mat)
+    minVec <- apply(attr.mat, 2, function(x) {min(x)})
+    attr.mat.centered <- t(attr.mat) - minVec
+    attr.mat.scale <- t(attr.mat.centered / maxminVec)
+    distance.mat <- as.matrix(dist(attr.mat.scale, method = "euclidean"))
+  } else if (metric=="euclidean"){
+    distance.mat <- as.matrix(dist(attr.mat, method = "euclidean"))
+  } else {
+    distance.mat <- as.matrix(dist(attr.mat, method = "manhattan"))
+  }
+  distance.mat
+}
+
+#=========================================================================#
 #' nearestNeighbors
 #'
 #' Find nearest neighbors of each instance using relief.method
 #' Used for regression stir (reSTIR) (no hits or misses specified in function).
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
-#' @param metric for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})
+#' @param metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)
 #' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]
 #' @param k number of constant nearest hits/misses for \code{"relieff"}
 #' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
@@ -14,19 +56,15 @@
 #'
 #' @examples
 #' #See vignette("STIRvignette")
-#' RF.method = "multisurf"
-#' metric <- "manhattan"
-#' neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
-#' results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-#' t_sorted_multisurf <- results.list$STIR_T
-#' t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+#' nbd.method = "multisurf"
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
 #'
 #' @export
 nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
   # create a matrix with num.samp rows, two columns
   # first column is sample Ri, second is Ri's nearest neighbors
   
-  dist.mat <- get.distance(attr.mat, metric = metric)
+  dist.mat <- stirDistances(attr.mat, metric = metric)
   num.samp <- nrow(attr.mat)
   num.pair <- num.samp * (num.samp-1) / 2 # number of paired distances
   radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)

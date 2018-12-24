@@ -10,7 +10,7 @@ nearestNeighbors(attr.mat, metric = "manhattan",
 \arguments{
 \item{attr.mat}{m x p matrix of m instances and p attributes}
 
-\item{metric}{for distance matrix between instances (\code{"manhattan"} or \code{"euclidean"})}
+\item{metric}{used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)}
 
 \item{nbd.method}{neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]}
 
@@ -28,11 +28,7 @@ Used for regression stir (reSTIR) (no hits or misses specified in function).
 }
 \examples{
 #See vignette("STIRvignette")
-RF.method = "multisurf"
-metric <- "manhattan"
-neighbor.idx.observed <- find.neighbors(predictors.mat, pheno.class, k = 0, method = RF.method)
-results.list <- stir(predictors.mat, neighbor.idx.observed, k = k, metric = metric, method = RF.method)
-t_sorted_multisurf <- results.list$STIR_T
-t_sorted_multisurf$attribute <- rownames(t_sorted_multisurf)
+nbd.method = "multisurf"
+neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
 
 }
