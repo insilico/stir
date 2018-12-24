@@ -1,6 +1,8 @@
 #=========================================================================#
 #' stirDistances
 #'
+#' Should we create a standardized manhattan and euclidean?
+#'
 #' Description
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
@@ -60,7 +62,7 @@ stirDistances <- function(attr.mat, metric="manhattan"){
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
 #'
 #' @export
-nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", k=0, sd.vec = NULL, sd.frac = 0.5){
+nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k="surf-theoretical-k"){
   # create a matrix with num.samp rows, two columns
   # first column is sample Ri, second is Ri's nearest neighbors
   
@@ -70,6 +72,11 @@ nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisu
   radius.surf <- sum(dist.mat)/(2*num.pair) # const r = mean(all distances)
   
   if (nbd.method == "relieff"){  
+    if (k=="surf-theoretical-k"){
+    # replace k with the theoretical expected value for SURF (close to multiSURF)
+    erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+    k <- floor((num.samp-1)*(1-erf(sd.frac/sqrt(2)))/2)
+    }
     Ri_NN.idxmat <- matrix(0, nrow = num.samp * k, ncol = 2)
     colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
     for (Ri in seq(1:num.samp)){ # for each sample Ri
