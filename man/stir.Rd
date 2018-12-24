@@ -4,8 +4,8 @@
 \alias{stir}
 \title{stir}
 \usage{
-stir(attr.mat, neighbor.idx, method, m = nrow(attr.mat), k, metric,
-  transform = "None")
+stir(attr.mat, neighbor.idx, method, m = nrow(attr.mat), k,
+  metric = "manhattan", transform = "None")
 }
 \arguments{
 \item{attr.mat}{m x p matrix of m instances and p attributes}
