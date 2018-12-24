@@ -199,7 +199,7 @@ nearest.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", metho
       Ri.distances <- dist.mat[Ri,] # all distances to sample Ri
       Ri.nearest <- order(Ri.distances, decreasing = F) # closest to furthest
       ## bam_add
-      Ri.nearest.idx <- Ri.nearest[2:(k+1),1] # skip Ri self
+      Ri.nearest.idx <- Ri.nearest[2:(k+1)] # skip Ri self
       # stack matrix of neighbor indices
       row.start <- (Ri-1)*k + 1
       row.end <- row.start + k - 1
