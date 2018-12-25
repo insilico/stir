@@ -225,7 +225,7 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   }
   
   # order by attribute p-value
-  reSTIR.results.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mats[, "pval.a"], decreasing = F), ]
+  reSTIR.results.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mat[, "pval.a"], decreasing = F), ]
   reSTIR.stats.df <- data.frame(reSTIR.results.ordered.mat)
   
   # order results based on p-value
