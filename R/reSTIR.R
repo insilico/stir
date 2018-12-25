@@ -164,14 +164,16 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
   if (regression.type=="lm"){
   fit <- summary(lm(pheno.diffs ~ predictor.diffs))
   }
-  stats.vec <- c(fit$coefficients[1,3], # beta_hat_0, intercept
-              fit$coefficients[2,3], # beat_hat_a, standardize beta for attribute
-              fit$coefficients[1,4], # p-value for intercept
-              fit$coefficients[2,4], # p-value for attribute beta
-              fit$r.squared,         # R^2 of fit
-              fit$fstatistic[1],     # F-stat and next is its p-value
-              1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3])
+  stats.vec <- c(
+    fit$coefficients[2,4], # p-value for attribute beta
+    fit$coefficients[2,3], # beta_hat_a, standardize beta for attribute
+    fit$r.squared,         # R^2 of fit
+    fit$fstatistic[1],     # F-stat and next is its p-value
+    1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3]),
+    fit$coefficients[1,3], # beta_hat_0, intercept
+    fit$coefficients[1,4] # p-value for intercept
   )
+  #colnames(reSTIR.stats.attr_ordered.mat) <- c("pval.a", "Ba", "R.sqr", "F.stat", "Fstat.pval", "B0", "B0.pval")
   return(stats.vec)
 }
 
@@ -215,17 +217,30 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
     reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec)
   }
 
+  # combine lists into matrix
   reSTIR.stats.attr_ordered.mat <- do.call(rbind, reSTIR.stats.list)
   # todo: adjusted p-value of attribute beta and sort
-  colnames(reSTIR.stats.attr_ordered.mat) <- c("B0", "Ba", "pval.0", "pval.a", "R.sqr", "Fstat", "Fstat.pval")
   
-  if (!is.null(colnames(test.mat))){
+  # rownames
+  if (!is.null(colnames(predictors.mat))){
     # add attribute names to stats/results matrix if the data matrix contains them
     rownames(reSTIR.stats.attr_ordered.mat) <- colnames(predictors.mat)
   }
+
+  # attribute p-values
+  attr.pvals <- reSTIR.stats.attr_ordered.mat[, 1]
+  # order-index for sorted attribute-beta p-values
+  attr.pvals.order.idx <- order(attr.pvals, decreasing = F)
+  # adjust p-values using Benjamini-Hochberg (default)
+  attr.pvals.adj <- p.adjust(attr.pvals[attr.pvals.order.idx])
   
   # order by attribute p-value
-  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mat[, "pval.a"], decreasing = F), ]
+  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[pval.order.idx, ]
+  # prepend adjused attribute p-values to first column
+  reSTIR.stats.ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.ordered.mat)
+  # colnames
+  colnames(reSTIR.stats.attr_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
+  # dataframe it
   reSTIR.stats.df <- data.frame(reSTIR.stats.ordered.mat)
   
   # order results based on p-value
