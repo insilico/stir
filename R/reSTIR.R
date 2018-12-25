@@ -187,7 +187,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param regression.type (\code{"linear"} or \code{"logistic"})
-#' @return reSTIR.results.df: reSTIR regression coefficients and p-values for each attribute
+#' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
 #' @examples
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
@@ -225,8 +225,8 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   }
   
   # order by attribute p-value
-  reSTIR.results.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mat[, "pval.a"], decreasing = F), ]
-  reSTIR.stats.df <- data.frame(reSTIR.results.ordered.mat)
+  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mat[, "pval.a"], decreasing = F), ]
+  reSTIR.stats.df <- data.frame(reSTIR.stats.ordered.mat)
   
   # order results based on p-value
   #arf.tstats.ordered <- data.frame(arf.tstats[order(arf.tstats[, "t.pval"], decreasing = F), ])
@@ -240,5 +240,5 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
   #rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
   #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
-  return(reSTIR.results.df)
+  return(reSTIR.stats.df)
 }
