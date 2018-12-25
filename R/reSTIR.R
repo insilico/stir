@@ -225,8 +225,14 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   if (!is.null(colnames(predictors.mat))){
     # add attribute names to stats/results matrix if the data matrix contains them
     rownames(reSTIR.stats.attr_ordered.mat) <- colnames(predictors.mat)
+  } else {
+    cat("If you have attribute names, add them to colnames of predictors.mat.")
   }
 
+  cat("debug\n")
+  cat(dim(reSTIR.stats.attr_ordered.mat))
+  cat("\n")
+  
   # attribute p-values
   attr.pvals <- reSTIR.stats.attr_ordered.mat[, 1]
   # order-index for sorted attribute-beta p-values
