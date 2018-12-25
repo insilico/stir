@@ -164,7 +164,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
   if (regression.type=="lm"){
   fit <- summary(lm(pheno.diffs ~ predictor.diffs))
   }
-  result <- c(fit$coefficients[1,3], # beta_hat_0, intercept
+  stats.vec <- c(fit$coefficients[1,3], # beta_hat_0, intercept
               fit$coefficients[2,3], # beat_hat_a, standardize beta for attribute
               fit$coefficients[1,4], # p-value for intercept
               fit$coefficients[2,4], # p-value for attribute beta
@@ -172,7 +172,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
               fit$fstatistic[1],     # F-stat and next is its p-value
               1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3])
   )
-  return(result)
+  return(stats.vec)
 }
 
 #=========================================================================#
@@ -182,7 +182,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' 
 #'
 #' @param pheno.vec length-m numeric outcome vector for linear regression, factor for logistic regression 
-#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param attr.mat m x p matrix of m instances and p attributes, include attr names as colnames 
 #' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
 #' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
@@ -200,7 +200,7 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   num.samp <- nrow(attr.mat)
   
   # run reSTIR, each attribute is a list, then we do.call rbind to a matrix
-  reSTIR.results.list <- vector("list",num.samp)
+  reSTIR.stats.list <- vector("list",num.samp)
   for (attr.idx in seq(1, num.attr)){
     attr.vals <- attr.mat[, attr.idx]
     Ri.attr.vals <- attr.vals[neighbor.pairs.idx[,1]]
@@ -212,13 +212,22 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
     pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals)
     
     # utility function
-    reSTIR.results.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec)
+    reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec)
   }
 
-  reSTIR.results.mat <- do.call(rbind, reSTIR.results.list)
+  reSTIR.stats.attr_ordered.mat <- do.call(rbind, reSTIR.stats.list)
   # todo: adjusted p-value of attribute beta and sort
-  colnames(reSTIR.results.mat) <- c("beta_hat_0", "beta_hat_a", "pval_0", "pval_a", "R.sqr", "Fstat", "Fstat.pval")
-    
+  colnames(reSTIR.stats.attr_ordered.mat) <- c("B0", "Ba", "pval.0", "pval.a", "R.sqr", "Fstat", "Fstat.pval")
+  
+  if (!is.null(colnames(test.mat))){
+    # add attribute names to stats/results matrix if the data matrix contains them
+    rownames(reSTIR.stats.attr_ordered.mat) <- colnames(predictors.mat)
+  }
+  
+  # order by attribute p-value
+  reSTIR.results.ordered.mat <- reSTIR.stats.attr_ordered.mat[order(reSTIR.stats.attr_ordered.mats[, "pval.a"], decreasing = F), ]
+  reSTIR.stats.df <- data.frame(reSTIR.results.ordered.mat)
+  
   # order results based on p-value
   #arf.tstats.ordered <- data.frame(arf.tstats[order(arf.tstats[, "t.pval"], decreasing = F), ])
   #arf.fstats.ordered <- data.frame(arf.fstats[order(arf.fstats[, "F.pval"], decreasing = F), ])
@@ -231,5 +240,5 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
   #rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
   #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
-  return(data.frame(reSTIR.results.mat))
+  return(reSTIR.results.df)
 }
