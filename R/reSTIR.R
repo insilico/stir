@@ -12,7 +12,7 @@ stirDiff <- function(a, b, type = "manhattan", norm.fac = 1){
   # compute the difference between two vectors elementwise
   if (type=="euclidean"){ # numeric
     val <- abs(a - b)^2/norm.fac
-  } else if(type="allele-sharing"){ # snps
+  } else if (type=="allele-sharing"){ # snps
     val <- abs(a-b)/2
   } else{ # manhattan, numeric
     val <- abs(a - b)/norm.fac

@@ -5,7 +5,7 @@
 \title{nearestNeighbors}
 \usage{
 nearestNeighbors(attr.mat, metric = "manhattan",
-  nbd.method = "multisurf", k = 0, sd.vec = NULL, sd.frac = 0.5)
+  nbd.method = "multisurf", sd.vec = NULL, sd.frac = 0.5, k = 0)
 }
 \arguments{
 \item{attr.mat}{m x p matrix of m instances and p attributes}
@@ -14,10 +14,11 @@ nearestNeighbors(attr.mat, metric = "manhattan",
 
 \item{nbd.method}{neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]}
 
-\item{k}{number of constant nearest hits/misses for \code{"relieff"}}
-
 \item{sd.frac}{multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
 The multiSURF default is sd.frac=0.5: mean - sd/2}
+
+\item{k}{number of constant nearest hits/misses for \code{"relieff"}. 
+The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default)}
 }
 \value{
 Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
@@ -25,10 +26,11 @@ Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 \description{
 Find nearest neighbors of each instance using relief.method
 Used for regression stir (reSTIR) (no hits or misses specified in function).
+Also used in reSTIR for case/control, but hit/miss is used in reSTIR function.
 }
 \examples{
-#See vignette("STIRvignette")
-nbd.method = "multisurf"
-neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
+
+neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
+neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff")
 
 }

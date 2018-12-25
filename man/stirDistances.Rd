@@ -13,7 +13,7 @@ stirDistances(attr.mat, metric = "manhattan")
 \code{"relief-scaled-manhattan"}, \code{"relief-scaled-euclidean"}, \code{"allele-sharing-manhattan"}).}
 }
 \description{
-Description
+Note: Should probalby standardize data before manhattan and euclidean?
 }
 \examples{
 Example
