@@ -228,10 +228,6 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   } else {
     cat("If you have attribute names, add them to colnames of predictors.mat.")
   }
-
-  cat("debug\n")
-  cat(dim(reSTIR.stats.attr_ordered.mat))
-  cat("\n")
   
   # attribute p-values
   attr.pvals <- reSTIR.stats.attr_ordered.mat[, 1]
@@ -240,26 +236,18 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   # adjust p-values using Benjamini-Hochberg (default)
   attr.pvals.adj <- p.adjust(attr.pvals[attr.pvals.order.idx])
   
+  #cat("debug\n")
+  #cat(length(attr.pvals.adj))
+  #cat("\n")
+  
   # order by attribute p-value
-  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
+  reSTIR.stats.pval_ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
   # prepend adjused attribute p-values to first column
-  reSTIR.stats.ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.ordered.mat)
+  reSTIR.stats.pval_ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.pval_ordered.mat)
   # colnames
-  colnames(reSTIR.stats.attr_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
+  colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
   # dataframe it
-  reSTIR.stats.df <- data.frame(reSTIR.stats.ordered.mat)
+  reSTIR.stats.df <- data.frame(reSTIR.stats.pval_ordered.mat)
   
-  # order results based on p-value
-  #arf.tstats.ordered <- data.frame(arf.tstats[order(arf.tstats[, "t.pval"], decreasing = F), ])
-  #arf.fstats.ordered <- data.frame(arf.fstats[order(arf.fstats[, "F.pval"], decreasing = F), ])
-  # stir.tstats.ordered <- data.frame(stir.tstats[order(stir.tstats[, "t.pval.stir"], decreasing = F), ])
-  
-  # adjust p-values using Benjamini-Hochberg (default)
-  #arf.tstats.ordered$t.pval.adj <- p.adjust(arf.tstats.ordered[, "t.pval"])
-  #arf.fstats.ordered$F.pval.adj <- p.adjust(arf.fstats.ordered[, "F.pval"])
-  # arf.tstats.ordered.samp$t.pval.adj <- p.adjust(arf.tstats.ordered.samp[, "t.pval"])
-  # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
-  #rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
-  #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
   return(reSTIR.stats.df)
 }
