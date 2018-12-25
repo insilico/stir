@@ -1,9 +1,30 @@
 #=========================================================================#
-#' stirDistances
-#'
-#' Should we create a standardized manhattan and euclidean?
+#' stirDiff
 #'
 #' Description
+#'
+#' @param test test
+#' @return test test 
+#' @examples
+#' Example
+#' @export
+stirDiff <- function(a, b, type = "manhattan", norm.fac = 1){
+  # compute the difference between two vectors elementwise
+  if (type=="euclidean"){ # numeric
+    val <- abs(a - b)^2/norm.fac
+  } else if(type="allele-sharing"){ # snps
+    val <- abs(a-b)/2
+  } else{ # manhattan, numeric
+    val <- abs(a - b)/norm.fac
+  }
+  return(val)
+}
+
+#=========================================================================#
+#' stirDistances
+#'
+#' Note: Should probalby standardize data before manhattan and euclidean?
+#'
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
 #' @param metric for distance matrix between instances (default: \code{"manhattan"}, \code{"euclidean"}, 
@@ -47,20 +68,21 @@ stirDistances <- function(attr.mat, metric="manhattan"){
 #'
 #' Find nearest neighbors of each instance using relief.method
 #' Used for regression stir (reSTIR) (no hits or misses specified in function).
+#' Also used in reSTIR for case/control, but hit/miss is used in reSTIR function. 
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
 #' @param metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)
 #' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]
 #' @param k number of constant nearest hits/misses for \code{"relieff"}. 
-#' The default k is the expected SURF theoretical k and uses sd.frac (.5 by default) 
+#' The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default) 
 #' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
 #' The multiSURF default is sd.frac=0.5: mean - sd/2 
 #' @return  Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 #'
 #' @examples
-#' #See vignette("STIRvignette")
 #' 
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff")
 #'
 #' @export
 nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k=0){
@@ -121,4 +143,93 @@ nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisu
   }
   # matrix of Ri's (first column) and their NN's (second column)
   return(Ri_NN.idxmat)
+}
+
+#=========================================================================#
+#' diffRegression
+#'
+#' Utility to run regression for a phenotype diff vector and one attribute diff vector. 
+#' Organize regression statistics into a vector.
+#'
+#' @param pheno.diffs outcome variable as vector of diffs 
+#' @param predictor.diffs one predictor varialbe as vector of diffs 
+#' @param regression.type (\code{"linear"}) todo: \code{"logistic"} and covariates
+#' @return vector or regression stats to put into list for reSTIR and combine into matrix
+#'
+#' @examples
+#'
+#' @export
+diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
+  # 
+  if (regression.type=="lm"){
+  fit <- summary(lm(pheno.diffs ~ predictor.diffs))
+  }
+  result <- c(fit$coefficients[1,3], # beta_hat_0, intercept
+              fit$coefficients[2,3], # beat_hat_a, standardize beta for attribute
+              fit$coefficients[1,4], # p-value for intercept
+              fit$coefficients[2,4], # p-value for attribute beta
+              fit$r.squared,         # R^2 of fit
+              fit$fstatistic[1],     # F-stat and next is its p-value
+              1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3])
+  )
+  return(result)
+}
+
+#=========================================================================#
+#' reSTIR
+#'
+#' regression-based STIR statistics for quantitative or case-control phenotypes
+#' 
+#'
+#' @param pheno.vec length-m numeric outcome vector for linear regression, factor for logistic regression 
+#' @param attr.mat m x p matrix of m instances and p attributes 
+#' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
+#' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
+#' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
+#' @param regression.type (\code{"linear"} or \code{"logistic"})
+#' @return reSTIR.results.df: reSTIR regression coefficients and p-values for each attribute
+#'
+#' @examples
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
+#' results.mat <- reSTIR(pheno.vec, predictors.mat, neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", regression.type="linear")
+#'
+#' @export
+reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", regression.type="linear"){
+
+  num.attr <- ncol(attr.mat)
+  num.samp <- nrow(attr.mat)
+  
+  # run reSTIR, each attribute is a list, then we do.call rbind to a matrix
+  reSTIR.results.list <- vector("list",num.samp)
+  for (attr.idx in seq(1, num.attr)){
+    attr.vals <- attr.mat[, attr.idx]
+    Ri.attr.vals <- attr.vals[neighbor.pairs.idx[,1]]
+    NN.attr.vals <- attr.vals[neighbor.pairs.idx[,2]]
+    attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals)
+    
+    Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
+    NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
+    pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals)
+    
+    # utility function
+    reSTIR.results.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec)
+  }
+
+  reSTIR.results.mat <- do.call(rbind, reSTIR.results.list)
+  # todo: adjusted p-value of attribute beta and sort
+  colnames(reSTIR.results.mat) <- c("beta_hat_0", "beta_hat_a", "pval_0", "pval_a", "R.sqr", "Fstat", "Fstat.pval")
+    
+  # order results based on p-value
+  #arf.tstats.ordered <- data.frame(arf.tstats[order(arf.tstats[, "t.pval"], decreasing = F), ])
+  #arf.fstats.ordered <- data.frame(arf.fstats[order(arf.fstats[, "F.pval"], decreasing = F), ])
+  # stir.tstats.ordered <- data.frame(stir.tstats[order(stir.tstats[, "t.pval.stir"], decreasing = F), ])
+  
+  # adjust p-values using Benjamini-Hochberg (default)
+  #arf.tstats.ordered$t.pval.adj <- p.adjust(arf.tstats.ordered[, "t.pval"])
+  #arf.fstats.ordered$F.pval.adj <- p.adjust(arf.fstats.ordered[, "F.pval"])
+  # arf.tstats.ordered.samp$t.pval.adj <- p.adjust(arf.tstats.ordered.samp[, "t.pval"])
+  # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
+  #rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
+  #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
+  return(data.frame(reSTIR.results.mat))
 }
