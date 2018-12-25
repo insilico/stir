@@ -235,7 +235,7 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   attr.pvals.adj <- p.adjust(attr.pvals[attr.pvals.order.idx])
   
   # order by attribute p-value
-  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[pval.order.idx, ]
+  reSTIR.stats.ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
   # prepend adjused attribute p-values to first column
   reSTIR.stats.ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.ordered.mat)
   # colnames
