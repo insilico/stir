@@ -71,36 +71,36 @@ stirDistances <- function(attr.mat, metric="manhattan"){
 #' Also used in reSTIR for case/control, but hit/miss is used in reSTIR function. 
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
-#' @param metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)
+#' @param nbd.metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric)
 #' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]
-#' @param k number of constant nearest hits/misses for \code{"relieff"}. 
-#' The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default) 
-#' @param sd.frac multiplier of the standard deviation of the distances when subtracting from average for SURF or multiSURF.
-#' The multiSURF default is sd.frac=0.5: mean - sd/2 
+#' @param k number of constant nearest hits/misses for \code{"relieff"} (fixed k). 
+#' The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default) for relieff nbd.
+#' @param sd.frac multiplier of the standard deviation from the mean distances, subtracted from mean distance to create for SURF or multiSURF radius.
+#' The multiSURF default "dead-band radius" is sd.frac=0.5: mean - sd/2 
 #' @return  Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 #'
 #' @examples
 #' # multisurf neighborhood with sigma/2 (sd.frac=0.5) "dead-band" boundary
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, nbd.method="multisurf", nbd.metric = "manhattan", sd.frac = 0.5)
 #' # reliefF (fixed-k) neighborhood using default k equal to theoretical surf expected value
 #' # One can change the theoretical value by changing sd.frac (default 0.5)
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff")
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, nbd.method="relieff", nbd.metric = "manhattan")
 #' # reliefF (fixed-k) neighborhood with a user-specified k
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff", k=10)
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, nbd.method="relieff", nbd.metric = "manhattan", k=10)
 #'
 #' @export
-nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k=0){
+nearestNeighbors <- function(attr.mat, nbd.method="multisurf", nbd.metric = "manhattan", sd.vec = NULL, sd.frac = 0.5, k=0){
   # create a matrix with num.samp rows, two columns
   # first column is sample Ri, second is Ri's nearest neighbors
   
-  dist.mat <- stirDistances(attr.mat, metric = metric)
+  dist.mat <- stirDistances(attr.mat, metric = nbd.metric)
   num.samp <- nrow(attr.mat)
   
   if (nbd.method == "relieff"){  
     if (k==0){ # if no k specified or value 0
     # replace k with the theoretical expected value for SURF (close to multiSURF)
     erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
-    # theoretical surf k (sd.frac=.5) for regression problems (will divide by 2 for balanced case/control in reSTIR)
+    # theoretical surf k (sd.frac=.5) for regression problems (does not depend on a hit/miss group)
     k <- floor((num.samp-1)*(1-erf(sd.frac/sqrt(2)))/2)  # uses sd.frac
     }
     Ri_NN.idxmat <- matrix(0, nrow = num.samp * k, ncol = 2)
@@ -191,9 +191,15 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @param outcome character name or length-m numeric outcome vector for linear regression, factor for logistic regression 
 #' @param data.set m x p matrix of m instances and p attributes, May also include outcome vector but then outcome should be name. Include attr names as colnames. 
 #' @param regression.type (\code{"lm"} or \code{"glm"})
+#' @param nbd.metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric). Used by nearestNeighbors().
+#' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]. Used by nearestNeighbors().
 #' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
 #' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
+#' @param k number of constant nearest hits/misses for \code{"relieff"} (fixed-k). Used by nearestNeighbors().
+#' The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default) 
+#' @param sd.frac multiplier of the standard deviation from the mean distances; subtracted from mean for SURF or multiSURF.
+#' The multiSURF default is sd.frac=0.5: mean - sd/2. Used by nearestNeighbors(). 
 #' @param fdr.method for p.adjust (\code{"fdr"}, \code{"bonferroni"}, ...) 
 #' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
@@ -210,7 +216,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #'
 #' @export
-reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="fdr"){
+reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", pheno.diff.type="manhattan", k=0, sd.frac=0.5, fdr.method="bonferroni"){
 
   ##### parse the commandline 
   #if (is.character(outcome)){
@@ -231,6 +237,10 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
   num.attr <- ncol(attr.mat)
   num.samp <- nrow(attr.mat)
   
+  ##### get Neighbors (no phenotype used)
+  # nbd.method, nbd.metric, ... at end k and sd.frac
+  neighbor.pairs.idx <- nearestNeighbors(attr.mat, nbd.method="multisurf", nbd.metric = "manhattan", sd.vec = NULL, sd.frac = sd.frac, k=k)
+  
   ##### run reSTIR, each attribute is a list, then we do.call rbind to a matrix
   reSTIR.stats.list <- vector("list",num.samp)
   for (attr.idx in seq(1, num.attr)){
@@ -239,6 +249,7 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
     NN.attr.vals <- attr.vals[neighbor.pairs.idx[,2]]
     attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals)
     
+    # Note: if regression.method="glm", case/control, need to change pheno.diff.vec to hit/miss factor
     Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
     NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
     pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals)
