@@ -183,12 +183,13 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' regression-based STIR statistics for quantitative or case-control phenotypes
 #' 
 #'
-#' @param pheno.vec length-m numeric outcome vector for linear regression, factor for logistic regression 
-#' @param attr.mat m x p matrix of m instances and p attributes, include attr names as colnames 
+#' @param outcome character name or length-m numeric outcome vector for linear regression, factor for logistic regression 
+#' @param data.set m x p matrix of m instances and p attributes, May also include outcome vector but then outcome should be name. Include attr names as colnames. 
+#' @param regression.type (\code{"lm"} or \code{"glm"})
 #' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
 #' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
-#' @param regression.type (\code{"lm"} or \code{"logistic"})
+#' @param fdr.method for p.adjust (\code{"fdr"}, \code{"bonferroni"}, ...) 
 #' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
 #' @examples
@@ -203,6 +204,10 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
     # e.g., outcome="qtrait" and data.set is data.frame including outcome variable
     pheno.vec <- data.set$outcome # get phenotype
     attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
+    cat(dim(attr.mat))
+    cat("\n")
+    cat(length(pheno.vec))
+    cat("\n")
   } else {
     pheno.vec <- outcome # assume users provides a separate outcome data vector
     attr.mat <- data.set # assumes data.set only contains attributes/predictors
