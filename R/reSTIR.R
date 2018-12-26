@@ -193,21 +193,22 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
 #' @examples
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
-#' results.mat <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan")
+#' nbd.method = "multisurf"
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
+#' restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
+#' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
+#' 
+#' restir.results.df <- reSTIR("qtrait", train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
+#' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #'
 #' @export
 reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="fdr"){
 
   ##### parse the commandline 
-  if (is.character(outcome)){ 
-    # e.g., outcome="qtrait" and data.set is data.frame including outcome variable
+  if (is.character(outcome) | is.numeric(outcome)){ 
+    # e.g., outcome="qtrait" or outcome=101 (pheno col index) and data.set is data.frame including outcome variable
     pheno.vec <- data.set[,outcome] # get phenotype
     attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
-    cat(dim(attr.mat))
-    cat("\n")
-    cat(length(pheno.vec))
-    cat("\n")
   } else {
     pheno.vec <- outcome # assume users provides a separate outcome data vector
     attr.mat <- data.set # assumes data.set only contains attributes/predictors
