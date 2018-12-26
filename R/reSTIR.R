@@ -153,7 +153,7 @@ nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisu
 #'
 #' @param pheno.diffs outcome variable as vector of diffs 
 #' @param predictor.diffs one predictor varialbe as vector of diffs 
-#' @param regression.type (\code{"linear"}) todo: \code{"logistic"} and covariates
+#' @param regression.type (\code{"lm"}) todo: \code{"glm"} and covariates
 #' @return vector or regression stats to put into list for reSTIR and combine into matrix
 #'
 #' @examples
@@ -188,20 +188,31 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
 #' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
 #' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
-#' @param regression.type (\code{"linear"} or \code{"logistic"})
+#' @param regression.type (\code{"lm"} or \code{"logistic"})
 #' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
 #' @examples
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
-#' results.mat <- reSTIR(pheno.vec, predictors.mat, neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", regression.type="linear")
+#' results.mat <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan")
 #'
 #' @export
-reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", regression.type="linear"){
+reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="fdr"){
 
+  ##### parse the commandline 
+  if (is.char(outcome)){ 
+    # e.g., outcome="qtrait" and data.set is data.frame including outcome variable
+    pheno.vec <- data.set$outcome # get phenotype
+    attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
+  } else {
+    pheno.vec <- outcome # assume users provides a separate outcome data vector
+    attr.mat <- data.set # assumes data.set only contains attributes/predictors
+  }
+  rm(data.set)  # cleanup memory
+  
   num.attr <- ncol(attr.mat)
   num.samp <- nrow(attr.mat)
   
-  # run reSTIR, each attribute is a list, then we do.call rbind to a matrix
+  ##### run reSTIR, each attribute is a list, then we do.call rbind to a matrix
   reSTIR.stats.list <- vector("list",num.samp)
   for (attr.idx in seq(1, num.attr)){
     attr.vals <- attr.mat[, attr.idx]
@@ -213,20 +224,18 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
     NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
     pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals)
     
-    # utility function
-    reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec)
+    # utility function: RUN regression
+    reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec, regression.type=regression.type)
   }
-
   # combine lists into matrix
   reSTIR.stats.attr_ordered.mat <- do.call(rbind, reSTIR.stats.list)
-  # todo: adjusted p-value of attribute beta and sort
   
   # rownames
-  if (!is.null(colnames(predictors.mat))){
+  if (!is.null(colnames(attr.mat))){
     # add attribute names to stats/results matrix if the data matrix contains them
-    rownames(reSTIR.stats.attr_ordered.mat) <- colnames(predictors.mat)
+    rownames(reSTIR.stats.attr_ordered.mat) <- colnames(attr.mat)
   } else {
-    cat("If you have attribute names, add them to colnames of predictors.mat.")
+    message("If you have attribute names, add them to colnames of input data.")
   }
   
   # attribute p-values
@@ -234,11 +243,7 @@ reSTIR <- function(pheno.vec, attr.mat, neighbor.pairs.idx, attr.diff.type="manh
   # order-index for sorted attribute-beta p-values
   attr.pvals.order.idx <- order(attr.pvals, decreasing = F)
   # adjust p-values using Benjamini-Hochberg (default)
-  attr.pvals.adj <- p.adjust(attr.pvals[attr.pvals.order.idx])
-  
-  #cat("debug\n")
-  #cat(length(attr.pvals.adj))
-  #cat("\n")
+  attr.pvals.adj <- p.adjust(attr.pvals[attr.pvals.order.idx], method=fdr.method)
   
   # order by attribute p-value
   reSTIR.stats.pval_ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
