@@ -213,7 +213,8 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="fdr"){
 
   ##### parse the commandline 
-  if (is.character(outcome) | is.numeric(outcome)){ 
+  #if (is.character(outcome)){
+  if (length(outcome)==1){
     # e.g., outcome="qtrait" or outcome=101 (pheno col index) and data.set is data.frame including outcome variable
     pheno.vec <- data.set[,outcome] # get phenotype
     attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
