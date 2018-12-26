@@ -239,7 +239,7 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
   
   ##### get Neighbors (no phenotype used)
   # nbd.method, nbd.metric, ... at end k and sd.frac
-  neighbor.pairs.idx <- nearestNeighbors(attr.mat, nbd.method="multisurf", nbd.metric = "manhattan", sd.vec = NULL, sd.frac = sd.frac, k=k)
+  neighbor.pairs.idx <- nearestNeighbors(attr.mat, nbd.method=nbd.method, nbd.metric = nbd.metric, sd.vec = NULL, sd.frac = sd.frac, k=k)
   
   ##### run reSTIR, each attribute is a list, then we do.call rbind to a matrix
   reSTIR.stats.list <- vector("list",num.samp)
