@@ -217,12 +217,14 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
   if (length(outcome)==1){
     # e.g., outcome="qtrait" or outcome=101 (pheno col index) and data.set is data.frame including outcome variable
     pheno.vec <- data.set[,outcome] # get phenotype
-    attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
+    if (is.character(outcome)){ # example column name: outcome="qtrait"
+      attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
+    } else { # example column index: outcome=101
+      attr.mat <- data.set[ , -outcome]  # drop the outcome/phenotype  
+    }
   } else { # user specifies a separate phenotype vector
     pheno.vec <- outcome # assume users provides a separate outcome data vector
     attr.mat <- data.set # assumes data.set only contains attributes/predictors
-    cat(length(pheno.vec),"\n")
-    cat(dim(attr.mat),"\n")
   }
   rm(data.set)  # cleanup memory
   
