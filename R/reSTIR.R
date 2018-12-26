@@ -202,7 +202,7 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
   ##### parse the commandline 
   if (is.character(outcome)){ 
     # e.g., outcome="qtrait" and data.set is data.frame including outcome variable
-    pheno.vec <- data.set$outcome # get phenotype
+    pheno.vec <- data.set[,outcome] # get phenotype
     attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
     cat(dim(attr.mat))
     cat("\n")
