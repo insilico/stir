@@ -80,9 +80,13 @@ stirDistances <- function(attr.mat, metric="manhattan"){
 #' @return  Ri_NN.idxmat, matrix of Ri's (first column) and their NN's (second column)
 #'
 #' @examples
-#' 
+#' # multisurf neighborhood with sigma/2 (sd.frac=0.5) "dead-band" boundary
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
+#' # reliefF (fixed-k) neighborhood using default k equal to theoretical surf expected value
+#' # One can change the theoretical value by changing sd.frac (default 0.5)
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff")
+#' # reliefF (fixed-k) neighborhood with a user-specified k
+#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "relieff", k=10)
 #'
 #' @export
 nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisurf", sd.vec = NULL, sd.frac = 0.5, k=0){
@@ -96,7 +100,8 @@ nearestNeighbors <- function(attr.mat, metric = "manhattan", nbd.method="multisu
     if (k==0){ # if no k specified or value 0
     # replace k with the theoretical expected value for SURF (close to multiSURF)
     erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
-    k <- floor((num.samp-1)*(1-erf(sd.frac/sqrt(2)))/2)
+    # theoretical surf k (sd.frac=.5) for regression problems (will divide by 2 for balanced case/control in reSTIR)
+    k <- floor((num.samp-1)*(1-erf(sd.frac/sqrt(2)))/2)  # uses sd.frac
     }
     Ri_NN.idxmat <- matrix(0, nrow = num.samp * k, ncol = 2)
     colnames(Ri_NN.idxmat) <- c("Ri_idx","NN_idx")
@@ -196,9 +201,12 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' nbd.method = "multisurf"
 #' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
 #' restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
-#' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #' 
+#' # qtrait is name of outcome variable
 #' restir.results.df <- reSTIR("qtrait", train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
+#' 
+#' # 101 is column index of outcome variable
+#' restir.results.df <- reSTIR(101, train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
 #' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #'
 #' @export
@@ -209,9 +217,11 @@ reSTIR <- function(outcome, data.set, regression.type="lm", neighbor.pairs.idx, 
     # e.g., outcome="qtrait" or outcome=101 (pheno col index) and data.set is data.frame including outcome variable
     pheno.vec <- data.set[,outcome] # get phenotype
     attr.mat <- data.set[ , !(names(data.set) %in% outcome)]  # drop the outcome/phenotype
-  } else {
+  } else { # user specifies a separate phenotype vector
     pheno.vec <- outcome # assume users provides a separate outcome data vector
     attr.mat <- data.set # assumes data.set only contains attributes/predictors
+    cat(length(pheno.vec),"\n")
+    cat(dim(attr.mat),"\n")
   }
   rm(data.set)  # cleanup memory
   
