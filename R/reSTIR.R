@@ -14,6 +14,8 @@ stirDiff <- function(a, b, type = "manhattan", norm.fac = 1){
     val <- abs(a - b)^2/norm.fac
   } else if (type=="allele-sharing"){ # snps
     val <- abs(a-b)/2
+  } else if (type=="match-mismatch"){ # snps
+    val <- as.character(a==b) # convert this to factor in reSTIR
   } else{ # manhattan, numeric
     val <- abs(a - b)/norm.fac
   }
@@ -168,17 +170,24 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
   # 
   if (regression.type=="lm"){
   fit <- summary(lm(pheno.diffs ~ predictor.diffs))
-  }
   stats.vec <- c(
-    fit$coefficients[2,4], # p-value for attribute beta
-    fit$coefficients[2,3], # beta_hat_a, standardize beta for attribute
-    fit$r.squared,         # R^2 of fit
-    fit$fstatistic[1],     # F-stat and next is its p-value
-    1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3]),
-    fit$coefficients[1,3], # beta_hat_0, intercept
-    fit$coefficients[1,4] # p-value for intercept
-  )
-  #colnames(reSTIR.stats.attr_ordered.mat) <- c("pval.a", "Ba", "R.sqr", "F.stat", "Fstat.pval", "B0", "B0.pval")
+    fit$coefficients[2,4], # p-value for attribute beta, pval.a
+    fit$coefficients[2,3], # beta_hat_a, standardize beta for attribute, Ba
+    fit$r.squared,         # R^2 of fit, R.sqr
+    fit$fstatistic[1],     # F-stat and next is its p-value, F.stat
+    1 - pf(fit$fstatistic[1], fit$fstatistic[2], fit$fstatistic[3]), # Fstat.pval
+    fit$coefficients[1,3], # beta_hat_0, intercept, B0
+    fit$coefficients[1,4] # p-value for intercept, B0.pval
+  ) 
+  } else{ #regression.type=="glm"
+    fit <- summary(glm(pheno.diffs ~ predictor.diffs, family=binomial(link=logit)))
+    stats.vec <- c(
+      fit$coefficients[2,4], # p-value for attribute beta, pval.a
+      fit$coefficients[2,3], # beta_hat_a, standardize beta for attribute, Ba
+      fit$coefficients[1,3], # beta_hat_0, intercept, B0
+      fit$coefficients[1,4]  # p-value for intercept, B0.pval
+    )
+  }
   return(stats.vec)
 }
 
@@ -194,8 +203,8 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @param nbd.metric used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric). Used by nearestNeighbors().
 #' @param nbd.method neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]. Used by nearestNeighbors().
 #' @param neighbor.pairs.idx nearest hit/miss matrices, output from \code{find.neighbors}
-#' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)
-#' @param pheno.diff.type diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)
+#' @param attr.diff.type diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric). Phenotype diff same as attr.diff.type when lm regression. For glm, phenotype diff is match/mismatch. 
+#' @param covar.diff.type diff type for covariates (\code{"manhattan"} or \code{"euclidean"} for numeric). 
 #' @param k number of constant nearest hits/misses for \code{"relieff"} (fixed-k). Used by nearestNeighbors().
 #' The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default) 
 #' @param sd.frac multiplier of the standard deviation from the mean distances; subtracted from mean for SURF or multiSURF.
@@ -204,19 +213,24 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' @return reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 #'
 #' @examples
-#' nbd.method = "multisurf"
-#' neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = nbd.method, sd.frac = 0.5)
-#' restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
-#' 
-#' # qtrait is name of outcome variable
-#' restir.results.df <- reSTIR("qtrait", train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
-#' 
+#' # Specifies name ("qtrait") of outcome and data.set, which is a data frame including the outcome
+#  # ReliefF fixed-k nbd, choose a k (k=10). Or choose sd.frac
+#' restir.results.df <- reSTIR("qtrait", train.data, regression.type="lm", nbd.method="relieff", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", k=10, fdr.method="bonferroni")
+
+#' # Specifies index (101) of outcome and data.set, which is a data frame including the outcome
+#' # ReliefF fixed-k neighborhood, surf theoretical default (sd.frac=.5) by not specifying k or let k=0
+#' restir.results.df <- reSTIR(101, train.data, regression.type="lm", nbd.method="relieff", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", sd.frac=0.5, fdr.method="bonferroni")
+
 #' # 101 is column index of outcome variable
-#' restir.results.df <- reSTIR(101, train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", fdr.method="bonferroni")
+#' restir.results.df <- reSTIR(101, train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", covar.diff.type="manhattan", fdr.method="bonferroni")
 #' row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #'
+#' # separate outcome vector and attribute matrix
+#' # multisurf
+#' restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", sd.frac=0.5, fdr.method="bonferroni")
+#' restir.positives <- row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #' @export
-reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", pheno.diff.type="manhattan", k=0, sd.frac=0.5, fdr.method="bonferroni"){
+reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", k=0, sd.frac=0.5, fdr.method="bonferroni"){
 
   ##### parse the commandline 
   #if (is.character(outcome)){
@@ -238,7 +252,8 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
   num.samp <- nrow(attr.mat)
   
   ##### get Neighbors (no phenotype used)
-  # nbd.method, nbd.metric, ... at end k and sd.frac
+  # nbd.method (relieff, multisurf...), nbd.metric (manhattan...), k (for relieff nbd, theoerical surf default) 
+  # sd.frac used by surf/multisurf relieff for theoretical k
   neighbor.pairs.idx <- nearestNeighbors(attr.mat, nbd.method=nbd.method, nbd.metric = nbd.metric, sd.vec = NULL, sd.frac = sd.frac, k=k)
   
   ##### run reSTIR, each attribute is a list, then we do.call rbind to a matrix
@@ -247,15 +262,21 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
     attr.vals <- attr.mat[, attr.idx]
     Ri.attr.vals <- attr.vals[neighbor.pairs.idx[,1]]
     NN.attr.vals <- attr.vals[neighbor.pairs.idx[,2]]
-    attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals)
-    
-    # Note: if regression.method="glm", case/control, need to change pheno.diff.vec to hit/miss factor
+    attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals, type=attr.diff.type)
+    # create pheno diff vector for linear regression (numeric)  
+    if (regression.type=="lm"){
     Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
     NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
-    pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals)
-    
+    pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, type=attr.diff.type)
+    } else { #regression.type=="glm"
+      # create pheno diff vector for logistic regression (match-mismatch or hit-miss)  
+      Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
+      NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
+      pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, type="match-mismatch")
+      pheno.diff.vec <- as.factor(ifelse(pheno.diff.vec=="TRUE",1,0))
+    }
     # utility function: RUN regression
-    reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec, regression.type=regression.type)
+    reSTIR.stats.list[[attr.idx]] <- diffRegression(pheno.diff.vec, attr.diff.vec, regression.type=regression.type) 
   }
   # combine lists into matrix
   reSTIR.stats.attr_ordered.mat <- do.call(rbind, reSTIR.stats.list)
@@ -279,10 +300,13 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
   reSTIR.stats.pval_ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
   # prepend adjused attribute p-values to first column
   reSTIR.stats.pval_ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.pval_ordered.mat)
-  # colnames
-  colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
+  if (regression.type=="lm"){
+    # colnames
+    colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
+  } else{ # "glm"
+    colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "beta.0", "pval.0")
+  }
   # dataframe it
   reSTIR.stats.df <- data.frame(reSTIR.stats.pval_ordered.mat)
-  
   return(reSTIR.stats.df)
 }
