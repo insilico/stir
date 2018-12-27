@@ -4,31 +4,54 @@
 \alias{reSTIR}
 \title{reSTIR}
 \usage{
-reSTIR(pheno.vec, attr.mat, neighbor.pairs.idx,
-  attr.diff.type = "manhattan", pheno.diff.type = "manhattan",
-  regression.type = "linear")
+reSTIR(outcome, data.set, regression.type = "lm",
+  nbd.method = "multisurf", nbd.metric = "manhattan",
+  attr.diff.type = "numeric-abs", covar.diff.type = "numeric-abs",
+  k = 0, sd.frac = 0.5, fdr.method = "bonferroni")
 }
 \arguments{
-\item{pheno.vec}{length-m numeric outcome vector for linear regression, factor for logistic regression}
+\item{outcome}{character name or length-m numeric outcome vector for linear regression, factor for logistic regression}
 
-\item{attr.mat}{m x p matrix of m instances and p attributes}
+\item{data.set}{m x p matrix of m instances and p attributes, May also include outcome vector but then outcome should be name. Include attr names as colnames.}
+
+\item{regression.type}{(\code{"lm"} or \code{"glm"})}
+
+\item{nbd.method}{neighborhood method [\code{"multisurf"} or \code{"surf"} (no k) or \code{"relieff"} (specify k)]. Used by nearestNeighbors().}
+
+\item{nbd.metric}{used in stirDistances for distance matrix between instances, default: \code{"manhattan"} (numeric). Used by nearestNeighbors().}
+
+\item{attr.diff.type}{diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric). Phenotype diff same as attr.diff.type when lm regression. For glm, phenotype diff is match/mismatch.}
+
+\item{covar.diff.type}{diff type for covariates (\code{"manhattan"} or \code{"euclidean"} for numeric).}
+
+\item{k}{number of constant nearest hits/misses for \code{"relieff"} (fixed-k). Used by nearestNeighbors().
+The default k=0 means use the expected SURF theoretical k with sd.frac (.5 by default)}
+
+\item{sd.frac}{multiplier of the standard deviation from the mean distances; subtracted from mean for SURF or multiSURF.
+The multiSURF default is sd.frac=0.5: mean - sd/2. Used by nearestNeighbors().}
+
+\item{fdr.method}{for p.adjust (\code{"fdr"}, \code{"bonferroni"}, ...)}
 
 \item{neighbor.pairs.idx}{nearest hit/miss matrices, output from \code{find.neighbors}}
-
-\item{attr.diff.type}{diff type for attributes (\code{"manhattan"} or \code{"euclidean"} for numeric)}
-
-\item{pheno.diff.type}{diff type for phenotype (\code{"manhattan"} or \code{"euclidean"} for numeric)}
-
-\item{regression.type}{(\code{"linear"} or \code{"logistic"})}
 }
 \value{
-reSTIR.results.df: reSTIR regression coefficients and p-values for each attribute
+reSTIR.stats.df: reSTIR regression coefficients and p-values for each attribute
 }
 \description{
 regression-based STIR statistics for quantitative or case-control phenotypes
 }
 \examples{
-neighbor.pairs.idx <- nearestNeighbors(predictors.mat, metric="manhattan", nbd.method = "multisurf", sd.frac = 0.5)
-results.mat <- reSTIR(pheno.vec, predictors.mat, neighbor.pairs.idx, attr.diff.type="manhattan", pheno.diff.type="manhattan", regression.type="linear")
+# Specifies name ("qtrait") of outcome and data.set, which is a data frame including the outcome
+restir.results.df <- reSTIR("qtrait", train.data, regression.type="lm", nbd.method="relieff", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", k=10, fdr.method="bonferroni")
+# Specifies index (101) of outcome and data.set, which is a data frame including the outcome
+# ReliefF fixed-k neighborhood, surf theoretical default (sd.frac=.5) by not specifying k or let k=0
+restir.results.df <- reSTIR(101, train.data, regression.type="lm", nbd.method="relieff", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", sd.frac=0.5, fdr.method="bonferroni")
+# 101 is column index of outcome variable
+restir.results.df <- reSTIR(101, train.data, regression.type="lm", neighbor.pairs.idx, attr.diff.type="manhattan", covar.diff.type="manhattan", fdr.method="bonferroni")
+row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 
+# separate outcome vector and attribute matrix
+# multisurf
+restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", sd.frac=0.5, fdr.method="bonferroni")
+restir.positives <- row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 }

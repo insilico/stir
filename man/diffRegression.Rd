@@ -11,7 +11,7 @@ diffRegression(pheno.diffs, predictor.diffs, regression.type = "lm")
 
 \item{predictor.diffs}{one predictor varialbe as vector of diffs}
 
-\item{regression.type}{(\code{"linear"}) todo: \code{"logistic"} and covariates}
+\item{regression.type}{(\code{"lm"}) todo: \code{"glm"} and covariates}
 }
 \value{
 vector or regression stats to put into list for reSTIR and combine into matrix

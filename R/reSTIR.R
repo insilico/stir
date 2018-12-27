@@ -1,22 +1,26 @@
 #=========================================================================#
 #' stirDiff
 #'
-#' Description
+#' A diff is a function that computes the diffrence of values for an attribute between two instances.
+#' It is used for attribute selection for attribute diffs and phenotype diffs.  
+#' This function is vectorized: input a and b can be two vectors of values for one attribute.   
 #'
-#' @param test test
-#' @return test test 
+#' @param a value of attribute for first instance
+#' @param b value of attribute for second instance
+#' @param type diff rule for the given attribute data type, such as numeric or categorical.
+#' @return val diff or vector of diffs 
 #' @examples
 #' Example
 #' @export
-stirDiff <- function(a, b, type = "manhattan", norm.fac = 1){
+stirDiff <- function(a, b, diff.type = "numeric-abs", norm.fac = 1){
   # compute the difference between two vectors elementwise
-  if (type=="euclidean"){ # numeric
+  if (diff.type=="numeric-sqr"){ # numeric squared difference
     val <- abs(a - b)^2/norm.fac
-  } else if (type=="allele-sharing"){ # snps
+  } else if (diff.type=="allele-sharing"){ # snps
     val <- abs(a-b)/2
-  } else if (type=="match-mismatch"){ # snps
+  } else if (diff.type=="match-mismatch"){ # snps
     val <- as.character(a==b) # convert this to factor in reSTIR
-  } else{ # manhattan, numeric
+  } else{ # numeric abs difference
     val <- abs(a - b)/norm.fac
   }
   return(val)
@@ -25,14 +29,15 @@ stirDiff <- function(a, b, type = "manhattan", norm.fac = 1){
 #=========================================================================#
 #' stirDistances
 #'
-#' Note: Should probalby standardize data before manhattan and euclidean?
-#'
+#' Create m x m distance matrix from m instances and p attributes using different metrics. Used by nearestNeighbors(). 
+#' Note: Probably best to standardize data before manhattan and euclidean.
 #'
 #' @param attr.mat m x p matrix of m instances and p attributes 
-#' @param metric for distance matrix between instances (default: \code{"manhattan"}, \code{"euclidean"}, 
-#' \code{"relief-scaled-manhattan"}, \code{"relief-scaled-euclidean"}, \code{"allele-sharing-manhattan"}).
+#' @param metric for distance matrix between instances (default: \code{"manhattan"}, others include \code{"euclidean"}, 
+#' versions scaled by max-min, \code{"relief-scaled-manhattan"} and \code{"relief-scaled-euclidean"}, and for GWAS \code{"allele-sharing-manhattan"}).
+#' @return  distancesmat, matrix of m x m (instances x intances) pairwise distances.
 #' @examples
-#' Example
+#' dist.mat <- stirDistances(predictors.mat, metric = "manhattan")
 #' @export
 stirDistances <- function(attr.mat, metric="manhattan"){
   # Compute distance matrix between all samples (rows)
@@ -230,7 +235,7 @@ diffRegression <- function(pheno.diffs, predictor.diffs, regression.type="lm") {
 #' restir.results.df <- reSTIR(pheno.vec, predictors.mat, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", sd.frac=0.5, fdr.method="bonferroni")
 #' restir.positives <- row.names(restir.results.df[restir.results.df[,1]<.05,]) # reSTIR p.adj<.05
 #' @export
-reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="manhattan", covar.diff.type="manhattan", k=0, sd.frac=0.5, fdr.method="bonferroni"){
+reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisurf", nbd.metric = "manhattan", attr.diff.type="numeric-abs", covar.diff.type="numeric-abs", k=0, sd.frac=0.5, fdr.method="bonferroni"){
 
   ##### parse the commandline 
   #if (is.character(outcome)){
@@ -262,17 +267,17 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
     attr.vals <- attr.mat[, attr.idx]
     Ri.attr.vals <- attr.vals[neighbor.pairs.idx[,1]]
     NN.attr.vals <- attr.vals[neighbor.pairs.idx[,2]]
-    attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals, type=attr.diff.type)
+    attr.diff.vec <- stirDiff(Ri.attr.vals, NN.attr.vals, diff.type=attr.diff.type)
     # create pheno diff vector for linear regression (numeric)  
     if (regression.type=="lm"){
     Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
     NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
-    pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, type=attr.diff.type)
+    pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, diff.type="numeric-abs")
     } else { #regression.type=="glm"
       # create pheno diff vector for logistic regression (match-mismatch or hit-miss)  
       Ri.pheno.vals <- pheno.vec[neighbor.pairs.idx[,1]]
       NN.pheno.vals <- pheno.vec[neighbor.pairs.idx[,2]]
-      pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, type="match-mismatch")
+      pheno.diff.vec <- stirDiff(Ri.pheno.vals, NN.pheno.vals, diff.type="match-mismatch")
       pheno.diff.vec <- as.factor(ifelse(pheno.diff.vec=="TRUE",1,0))
     }
     # utility function: RUN regression
@@ -300,8 +305,7 @@ reSTIR <- function(outcome, data.set, regression.type="lm", nbd.method="multisur
   reSTIR.stats.pval_ordered.mat <- reSTIR.stats.attr_ordered.mat[attr.pvals.order.idx, ]
   # prepend adjused attribute p-values to first column
   reSTIR.stats.pval_ordered.mat <- cbind(attr.pvals.adj,reSTIR.stats.pval_ordered.mat)
-  if (regression.type=="lm"){
-    # colnames
+  if (regression.type=="lm"){# different stats colnames for lm and glm
     colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "R.sqr", "F.stat", "Fstat.pval", "beta.0", "pval.0")
   } else{ # "glm"
     colnames(reSTIR.stats.pval_ordered.mat) <- c("pval.adj", "pval.attr", "beta.attr", "beta.0", "pval.0")

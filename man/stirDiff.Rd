@@ -4,16 +4,22 @@
 \alias{stirDiff}
 \title{stirDiff}
 \usage{
-stirDiff(a, b, type = "manhattan", norm.fac = 1)
+stirDiff(a, b, diff.type = "numeric-abs", norm.fac = 1)
 }
 \arguments{
-\item{test}{test}
+\item{a}{value of attribute for first instance}
+
+\item{b}{value of attribute for second instance}
+
+\item{type}{diff rule for the given attribute data type, such as numeric or categorical.}
 }
 \value{
-test test
+val diff or vector of diffs
 }
 \description{
-Description
+A diff is a function that computes the diffrence of values for an attribute between two instances.
+It is used for attribute selection for attribute diffs and phenotype diffs.  
+This function is vectorized: input a and b can be two vectors of values for one attribute.
 }
 \examples{
 Example
