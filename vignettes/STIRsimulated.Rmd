@@ -126,13 +126,9 @@ regular.t.padj <- data.frame(regT.padj = p.adjust(regular.ttest.sorted))
 
 ```{r}
 final.mat <- Reduce(function(x, y) merge(x, y, by = "attribute", sort = F), t_sorted_relieff)
-# final.mat <- reshape::merge_all(t_sorted_relieff)
-
-# Are the columns sorted separately? There is only one column of attribute names 
-# View(final.mat[1:15,],"Resutls: First 15 Rows")  # View has a problem with Rmarkdown
 
 if (writeResults == T){
-write.csv(final.mat[,1:4],file="final.mat.csv")
+  write.csv(final.mat[,1:4],file="final.mat.csv")
 }
 ```
 
