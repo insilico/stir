@@ -229,7 +229,6 @@ find.neighbors <- function(attr.mat, pheno.class, metric = "manhattan", method="
     for (Ri in seq(1:num.samp)){ # for each sample Ri
       Ri.distances <- sort(dist.mat[Ri,], decreasing = F)
       Ri.nearest <- Ri.distances[Ri.distances < Ri.radius[Ri]] # within the threshold
-      # Ri.nearest.idx <- as.numeric(names(Ri.nearest))
       Ri.nearest.idx <- match(names(Ri.nearest), row.names(attr.mat))
       Ri.nearest.mat <- data.frame(Ri.nearest.idx, pheno.class[Ri.nearest.idx])
       Ri.nearest.hits <- Ri.nearest.mat[Ri.nearest.mat[,2] == Ri.nearest.mat[1,2],]
@@ -291,7 +290,6 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   # simple implementation of the relieff algorithm
   # returns a named vector of attribute scores
   
-  
   num.attr <- ncol(attr.mat)
   n.samp <- nrow(attr.mat)
   vecW <- rep(0, num.attr)
@@ -302,16 +300,10 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   
   # Initialize Relief-F T-stat and Anova F-stat
   arf.tstats <- matrix(0, nrow = num.attr, ncol = 3)
-  arf.tstats.samp <- matrix(0, nrow = num.attr, ncol = 2)
-  arf.fstats <- matrix(0, nrow = num.attr, ncol = 2)
   stir.tstats <- matrix(0, nrow = num.attr, ncol = 2)
   colnames(arf.tstats) <- c("t.stat", "t.pval", "cohen.d")
-  colnames(arf.tstats.samp) <- c("t.stat", "t.pval")
-  colnames(arf.fstats) <- c("F.stat", "F.pval")
   colnames(stir.tstats) <- c("t.stat.stir", "t.pval.stir")
   rownames(arf.tstats) <- colnames(attr.mat)
-  rownames(arf.tstats.samp) <- colnames(attr.mat)
-  rownames(arf.fstats) <- colnames(attr.mat)
   rownames(stir.tstats) <- colnames(attr.mat)
   
   hit.df <- neighbor.idx[[1]]
@@ -384,46 +376,17 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
     man.pval <- pt(q = t.stat.man, df = df, lower.tail = F)
     arf.tstats[attr.idx, ] <- c(t.stat.man, man.pval, cohen.d)
     
-    # or, use already built-in t-test in R's stats package
+    # or, use built-in t-test in R's stats package
     # t.builtin <- t.test(attr.diff.trans.miss, attr.diff.trans.hit, alternative = "greater")
     # arf.tstats.builtin[attr.idx, ] <- c(t.builtin$statistic, t.builtin$p.value)
     
-    #######################################
-    # 1b. T-test Redo
-    #######################################  
-
-    # my.hit.df <- data.frame(Ri.hit.idx, attr.diff.hit)
-    # summarised.t.hit <- my.hit.df %>% group_by(Ri.hit.idx) %>% summarise(avg = mean(attr.diff.hit))
-    # 
-    # my.miss.df <- data.frame(Ri.miss.idx, attr.diff.miss)
-    # summarised.t.miss <- my.miss.df %>% group_by(Ri.miss.idx) %>% summarise(avg = mean(attr.diff.miss))
-    # # mean(summarised.t.miss$avg) - mean(summarised.t.hit$avg)
-    # 
-    # t.test.stir <- t.test(summarised.t.miss$avg, summarised.t.hit$avg, alternative = "greater")
-    # stir.tstats[attr.idx, ] <- c(t.test.stir$statistic, t.test.stir$p.value)
-    # # mean(summarised.t.miss$avg) - mean(summarised.t.hit$avg)
-      
-      
-      
-      
-    #######################################
-    # 2. F-test
-    #######################################   
-    diff.aov.df <- data.frame(diffs = c(attr.diff.hit, attr.diff.miss),
-                              hitmiss = c(rep("hit", n.hits), rep("miss", n.misses))) 
-    aov.result <- summary(aov(diffs ~ hitmiss, data = diff.aov.df))
-    arf.fstats[attr.idx,] <- as.numeric(aov.result[[1]][1, c("F value", "Pr(>F)")])
     
     #######################################
-    # 3. ReliefF score
+    # 2. ReliefF score
     #######################################   
-    
-
     vecW[attr.idx] <- mu.misses - mu.hits
-    #(sum(attr.diff.trans.miss.rf) - sum(attr.diff.trans.hit.rf)) 
-    
+
   }
-  
 
   relief.score <- vecW * one_over_m
   relief.score.df <- data.frame(attribute = names(relief.score), relief.score = relief.score)
@@ -431,16 +394,10 @@ stir <- function(attr.mat, neighbor.idx, method, m = nrow(attr.mat),
   
   # order results based on p-value
   arf.tstats.ordered <- data.frame(arf.tstats[order(arf.tstats[, "t.pval"], decreasing = F), ])
-  arf.fstats.ordered <- data.frame(arf.fstats[order(arf.fstats[, "F.pval"], decreasing = F), ])
-  # stir.tstats.ordered <- data.frame(stir.tstats[order(stir.tstats[, "t.pval.stir"], decreasing = F), ])
-  
   # adjust p-values using Benjamini-Hochberg (default)
   arf.tstats.ordered$t.pval.adj <- p.adjust(arf.tstats.ordered[, "t.pval"])
-  arf.fstats.ordered$F.pval.adj <- p.adjust(arf.fstats.ordered[, "F.pval"])
-  # arf.tstats.ordered.samp$t.pval.adj <- p.adjust(arf.tstats.ordered.samp[, "t.pval"])
-  # stir.tstats.ordered$t.pval.stir.adj <- p.adjust(stir.tstats.ordered[, "t.pval.stir"])
-  rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered, STIR_F=arf.fstats.ordered)
-  #names(rs.list) <- c("OriRelief", "STIR-t", "STIR-F")
+  
+  rs.list <- list(OriRelief=relief.score.df, STIR_T=arf.tstats.ordered)
   return(rs.list)
 }
 
